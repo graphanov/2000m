@@ -9,6 +9,7 @@
 
 #![allow(clippy::vec_init_then_push)]
 
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -433,6 +434,38 @@ fn replay(client: &mut DriverClient, ticks: u64) -> Result<ReplayData, BoxError>
         .ok_or("replay response missing replay field")?;
     let parsed: ReplayData = serde_json::from_value(replay.clone())?;
     Ok(parsed)
+}
+
+fn decode_replay_inputs(encoded: &str) -> Result<Vec<(i64, bool, bool)>, BoxError> {
+    let bytes = BASE64
+        .decode(encoded)
+        .map_err(|err| format!("replay inputSequence was not valid base64: {}", err))?;
+    let mut inputs = Vec::with_capacity(bytes.len());
+    for (idx, byte) in bytes.into_iter().enumerate() {
+        if byte & !0b1111 != 0 {
+            return Err(format!(
+                "replay input byte {} used reserved bits: 0x{:02x}",
+                idx, byte
+            )
+            .into());
+        }
+        let steer = match byte & 0b11 {
+            0 => -1,
+            1 => 0,
+            2 => 1,
+            other => {
+                return Err(format!(
+                    "replay input byte {} used invalid steer bits: {}",
+                    idx, other
+                )
+                .into())
+            }
+        };
+        let boost = byte & 0b0100 != 0;
+        let jump = byte & 0b1000 != 0;
+        inputs.push((steer, boost, jump));
+    }
+    Ok(inputs)
 }
 
 // ---------------------------------------------------------------------------
@@ -1961,8 +1994,8 @@ fn ac17_tunneling_prevention(harness: &Harness) -> CheckResult {
         s = next;
     }
 
-    let pass = tunneling_count == 0;
-    let precision = if tunneling_count == 0 {
+    let pass = tunneling_count == 0 && collision_count > 0;
+    let precision = if tunneling_count == 0 && collision_count > 0 {
         95
     } else if tunneling_count < 5 {
         60
@@ -2027,7 +2060,7 @@ fn ac18_dense_field_performance(harness: &Harness) -> CheckResult {
         init(&mut check_client, 18, None)?.state.quality.is_some()
     };
 
-    let pass = avg_ms < 16.6 && max_obstacles >= 50;
+    let pass = avg_ms < 16.6 && p95_ms < 20.0 && p99_ms < 30.0 && max_obstacles >= 50;
     let perf_score = if avg_ms < 5.0 {
         95
     } else if avg_ms < 10.0 {
@@ -2123,7 +2156,7 @@ fn ac19_monster_evasion(harness: &Harness) -> CheckResult {
         }
     }
 
-    let pass = monster_stuck_ticks < 10 && monster_teleport_ticks == 0;
+    let pass = monster_stuck_ticks < 10 && monster_teleport_ticks == 0 && evasion_ticks > 50;
 
     let precision = if evasion_ticks > 100 {
         95
@@ -2286,7 +2319,7 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
         }
     }
 
-    let pass = crashes >= 5 && recoveries >= crashes && state_corruption == 0;
+    let pass = crashes >= 50 && recoveries >= crashes && state_corruption == 0;
 
     let precision = if recoveries == crashes {
         95
@@ -2661,8 +2694,33 @@ fn ac26_replay_accuracy(harness: &Harness) -> CheckResult {
         .map(|r| !r.input_sequence.is_empty() && r.end_tick >= r.start_tick)
         .unwrap_or(false);
 
-    let pass =
-        checksums_match && driver_replay_match == Some(true) && driver_replay_payload_present;
+    let driver_replay_roundtrip = if let Some(replay) = &replay_data {
+        let decoded_inputs = decode_replay_inputs(&replay.input_sequence)?;
+        let declared_ticks = replay.end_tick.saturating_sub(replay.start_tick) as usize;
+        if decoded_inputs.is_empty() || declared_ticks != decoded_inputs.len() {
+            false
+        } else {
+            let mut replay_client = DriverClient::spawn(harness)?;
+            init(&mut replay_client, replay.seed, None)?;
+            let mut replay_states = Vec::with_capacity(decoded_inputs.len());
+            for (steer, boost, jump) in decoded_inputs {
+                let p = step(&mut replay_client, steer, boost, jump)?;
+                replay_states.push(p.canonical);
+            }
+            let replay_combined = replay_states.join("\n");
+            let mut replay_hasher = Sha256::new();
+            replay_hasher.update(replay_combined.as_bytes());
+            let replay_checksum = format!("sha256:{:x}", replay_hasher.finalize());
+            replay_checksum == replay.state_checksum
+        }
+    } else {
+        false
+    };
+
+    let pass = checksums_match
+        && driver_replay_match == Some(true)
+        && driver_replay_payload_present
+        && driver_replay_roundtrip;
 
     let precision = if checksums_match {
         if driver_replay_match == Some(true) {
@@ -2725,13 +2783,18 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         }
     }
 
-    // Try profile command
+    // Try profile command. Per protocol, -1 means unavailable and must not be
+    // interpreted as zero allocations or valid memory evidence.
     let profile_data = profile(&mut client, Some(100)).ok();
+    let mut allocations_available = false;
+    let mut memory_available = false;
     if let Some(ref pm) = profile_data {
-        if pm.total_allocations > 0 {
+        if pm.total_allocations >= 0 {
+            allocations_available = true;
             total_allocations += pm.total_allocations;
         }
-        if pm.peak_memory_bytes > 0 {
+        if pm.peak_memory_bytes >= 0 {
+            memory_available = true;
             peak_memory = peak_memory.max(pm.peak_memory_bytes);
         }
     }
@@ -2745,11 +2808,11 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let p99_idx = (n * 0.99) as usize;
     let p99_ms = sorted.get(p99_idx).copied().unwrap_or(0.0) / 1_000_000.0;
 
-    let has_profile = profile_data.is_some();
     let pass = avg_ms < 16.6
         && p99_ms < 20.0
-        && has_profile
+        && allocations_available
         && total_allocations == 0
+        && memory_available
         && peak_memory > 0
         && peak_memory < 50_000_000;
 
