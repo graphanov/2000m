@@ -60,10 +60,7 @@ fn main() {
             break;
         };
         let trimmed = line.trim();
-        let response = if has_cmd(trimmed, "init") {
-            state = State::new();
-            ok_state(&state)
-        } else if has_cmd(trimmed, "reset") {
+        let response = if has_cmd(trimmed, "init") || has_cmd(trimmed, "reset") {
             state = State::new();
             ok_state(&state)
         } else if has_cmd(trimmed, "state") {

@@ -6,12 +6,16 @@ to reproduce a SkiFree-inspired game in Rust. It is not a general intelligence b
 ## How a model enters
 
 1. Create a separate produced-game repository for the model, for example `2000m-<model>`.
-2. Build a Rust game/homage there. Do not put produced-game source into this benchmark repo.
-3. Ship a headless driver that implements `protocol/2000m.driver.v0.md`.
-4. Add a root `2000m.json` manifest that validates against `protocol/2000m.json.schema.json` and
+2. That produced-game repository should itself be an Open Scaffold work record: the whole point of
+   2000m is to measure how well a model drives the Open Scaffold evolve loop, so the model's
+   plans, generations, and evidence live there. This benchmark repository stays neutral and ships
+   no framework apparatus.
+3. Build a Rust game/homage there. Do not put produced-game source into this benchmark repo.
+4. Ship a headless driver that implements `protocol/2000m.driver.v0.md`.
+5. Add a root `2000m.json` manifest that validates against `protocol/2000m.json.schema.json` and
    declares how to launch the driver.
-5. Run the conformance suite from this repo against the produced-game directory.
-6. Record each evolve generation's mechanical AC pass count and per-AC verdicts in `results/`.
+6. Run the conformance suite from this repo against the produced-game directory.
+7. Record each evolve generation's mechanical AC pass count and per-AC verdicts in `results/`.
 
 The conformance suite is the scorer. It drives the produced game only by spawning the manifest's
 subprocess driver and sending JSON-line protocol commands over stdin/stdout.

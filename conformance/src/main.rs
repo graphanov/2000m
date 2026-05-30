@@ -1,3 +1,7 @@
+// The acceptance-criteria list in `run_suite` is intentionally built as 16 sequential
+// `run_ac` pushes for readability; a single `vec![]` macro of 16 calls is harder to scan.
+#![allow(clippy::vec_init_then_push)]
+
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::env;
@@ -552,7 +556,7 @@ fn collect_determinism_stream(harness: &Harness) -> Result<Vec<String>, BoxError
     for tick in 0..80 {
         let steer = match tick % 9 {
             0 | 1 => -1,
-            2 | 3 | 4 => 0,
+            2..=4 => 0,
             _ => 1,
         };
         let boost = tick % 13 == 0;
