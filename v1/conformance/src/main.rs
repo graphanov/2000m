@@ -2928,7 +2928,8 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
 
     let total_event_types = event_types_seen.len();
     let has_rich_events = total_event_types >= 4;
-    let pass = total_events_seen > 0;
+    let visual_feedback_events = particle_events + shake_events + style_events + near_miss_events;
+    let pass = particle_events > 0 && shake_events > 0 && visual_feedback_events >= 3;
 
     let precision = if total_event_types >= 6 {
         95
@@ -2965,9 +2966,10 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
         pass,
         quality: breakdown.composite(),
         detail: format!(
-            "event_types={} total_events={} [particles={}, shake={}, style={}, landing={}, crash={}, near_miss={}] types={:?}",
+            "event_types={} total_events={} visual_feedback_events={} [particles={}, shake={}, style={}, landing={}, crash={}, near_miss={}] types={:?}",
             total_event_types,
             total_events_seen,
+            visual_feedback_events,
             particle_events,
             shake_events,
             style_events,
