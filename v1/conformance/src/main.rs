@@ -2287,6 +2287,8 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
     let mut crashes = 0u32;
     let mut recoveries = 0u32;
     let mut state_corruption = 0u32;
+    let mut first_memory: Option<i64> = None;
+    let mut max_memory: Option<i64> = None;
     let mut last_memory: Option<i64> = None;
 
     for _ in 0..5000 {
@@ -2311,15 +2313,28 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
             recoveries += 1;
         }
 
-        // Track memory if quality metrics available
+        // Track memory if quality metrics are available. Negative values mean
+        // unavailable and cannot prove absence of leaks.
         if let Some(q) = &ns.quality {
             if let Some(mem) = q.memory_bytes {
-                last_memory = Some(mem);
+                if mem >= 0 {
+                    if first_memory.is_none() {
+                        first_memory = Some(mem);
+                    }
+                    max_memory = Some(max_memory.map_or(mem, |max| max.max(mem)));
+                    last_memory = Some(mem);
+                }
             }
         }
     }
 
-    let pass = crashes >= 50 && recoveries >= crashes && state_corruption == 0;
+    let memory_ok = match (first_memory, max_memory) {
+        (Some(first), Some(max)) if first > 0 => max <= first + (first / 10),
+        (Some(_), Some(max)) => max < 50_000_000,
+        _ => false,
+    };
+
+    let pass = crashes >= 50 && recoveries >= crashes && state_corruption == 0 && memory_ok;
 
     let precision = if recoveries == crashes {
         95
@@ -2342,8 +2357,8 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
         pass,
         quality: breakdown.composite(),
         detail: format!(
-            "crashes={}, recoveries={}, corruptions={}, final_memory={:?}",
-            crashes, recoveries, state_corruption, last_memory
+            "crashes={}, recoveries={}, corruptions={}, first_memory={:?}, max_memory={:?}, final_memory={:?}, memory_ok={}",
+            crashes, recoveries, state_corruption, first_memory, max_memory, last_memory, memory_ok
         ),
         breakdown,
     })
@@ -2368,7 +2383,7 @@ fn ac22_spawn_precision(harness: &Harness) -> CheckResult {
     };
 
     let deviation = (spawn - 2000.0).abs();
-    let pass = deviation < 5.0; // generous tolerance for v1
+    let pass = deviation <= 0.1;
 
     let precision = if deviation < 0.1 {
         100
