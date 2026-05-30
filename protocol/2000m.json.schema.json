@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://graphanov.github.io/2000m/protocol/2000m.json.schema.json",
+  "title": "2000m produced-game manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "driver", "language"],
+  "properties": {
+    "protocolVersion": {
+      "const": "2000m.driver.v0",
+      "description": "Driver protocol implemented by the produced game."
+    },
+    "driver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Executable or shell-resolved command to launch from the produced-game root."
+        },
+        "args": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Arguments passed to the driver command."
+        }
+      }
+    },
+    "language": {
+      "type": "string",
+      "const": "rust",
+      "description": "Produced games for 2000m v0 are Rust projects."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional human note; ignored by scoring."
+    }
+  }
+}

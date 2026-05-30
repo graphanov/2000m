@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "2000m.results.v0",
+  "rankingRule": "Sort by finalPassCount desc, then generationsToPlayable asc, then generationsToYeti asc, then fewer generations used. Human feel is never used for rank.",
+  "rows": [
+    {
+      "rank": 1,
+      "model": "placeholder-model",
+      "producedRepo": "graphanov/2000m-placeholder-model",
+      "generationCap": 8,
+      "trajectory": [2, 4, 7, 9],
+      "finalPassCount": 9,
+      "totalAcs": 16,
+      "generationsToPlayable": 3,
+      "generationsToYeti": null,
+      "monotonic": true,
+      "humanFeelOperatorTasteNotScore": "not evaluated — placeholder row",
+      "evidence": "results/example-placeholder-final.json"
+    }
+  ]
+}

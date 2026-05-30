@@ -1,0 +1,8 @@
+
+# Rust build artifacts
+target/
+**/target/
+
+# Redundant nested lockfiles (workspace uses the root Cargo.lock)
+conformance/Cargo.lock
+stub-driver/Cargo.lock

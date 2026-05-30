@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-score:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Format check
+        run: cargo fmt --all --check
+
+      - name: Build workspace
+        run: cargo build --workspace --quiet
+
+      - name: Clippy
+        run: cargo clippy --workspace -- -D warnings
+
+      - name: Score the stub driver (harness self-check)
+        run: |
+          cargo run --quiet -p m2000-conformance -- stub-driver --json-out result.json
+          cat result.json
+
+      - name: Assert the suite discriminates (stub passes a low, non-trivial count)
+        run: |
+          python3 - <<'PY'
+          import json
+          d = json.load(open("result.json"))
+          assert d["determinism"]["pass"] is True, "determinism must hold"
+          pc = d["passCount"]
+          # The stub intentionally implements only the basics. If it ever passes
+          # everything, the suite has stopped discriminating; if it passes nothing,
+          # the harness is broken. Lock the expected band.
+          assert 1 <= pc <= 5, f"stub passCount {pc} outside expected discrimination band 1..5"
+          print(f"OK: determinism pass, stub scored {pc}/{d['totalAcs']}")
+          PY

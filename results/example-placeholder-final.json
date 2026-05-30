@@ -1,0 +1,8 @@
+{
+  "protocolVersion": "2000m.driver.v0",
+  "gameDir": "graphanov/2000m-placeholder-model",
+  "determinism": { "pass": true, "detail": "placeholder example" },
+  "passCount": 9,
+  "totalAcs": 16,
+  "acs": []
+}

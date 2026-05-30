@@ -1,0 +1,10 @@
+# 2000m benchmark workspace.
+# Groups the conformance scorer and the minimal stub driver so CI and `cargo build`
+# build both crates from the repo root. Produced-game contenders live in their own
+# repositories and are NOT part of this workspace.
+[workspace]
+resolver = "2"
+members = [
+    "conformance",
+    "stub-driver",
+]
