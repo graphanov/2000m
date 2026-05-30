@@ -16,6 +16,15 @@ to reproduce a SkiFree-inspired game in Rust. It is not a general intelligence b
 The conformance suite is the scorer. It drives the produced game only by spawning the manifest's
 subprocess driver and sending JSON-line protocol commands over stdin/stdout.
 
+## No hints (brutal mode)
+
+The suite gives the produced game no setup hints, scenario flags, or shortcut keys. It sends an
+empty `config` on every `init` and reaches each mechanic the way a human would: it reads the
+seeded obstacle and monster coordinates the game itself reports and steers the skier into trees,
+onto ramps, and into the yeti by ordinary protocol input. Collisions, ramps, and monster contact
+must genuinely work — a produced game cannot pass a mechanic by special-casing a flag, because no
+such flag exists.
+
 ## Mechanical score
 
 The ranked score is objective and reproducible:

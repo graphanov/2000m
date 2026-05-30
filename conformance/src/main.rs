@@ -646,11 +646,8 @@ fn ac3_slope_scrolls(harness: &Harness) -> CheckResult {
 
 fn ac4_horizontal_wrap(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    let mut prev = init(&mut client, 4, Some(json!({ "slopeWidthM": 100.0 })))?
-        .state
-        .skier
-        .x;
-    for idx in 1..=240 {
+    let mut prev = init(&mut client, 4, None)?.state.skier.x;
+    for idx in 1..=1200 {
         let x = step(&mut client, 1, false, false)?.state.skier.x;
         if x < prev - 10.0 {
             return Ok(format!(
@@ -663,7 +660,7 @@ fn ac4_horizontal_wrap(harness: &Harness) -> CheckResult {
         }
         prev = x;
     }
-    Err("no horizontal wrap discontinuity observed after 240 right-steer ticks".into())
+    Err("no horizontal wrap discontinuity observed after 1200 right-steer ticks".into())
 }
 
 fn ac5_seeded_obstacles(harness: &Harness) -> CheckResult {
@@ -685,15 +682,68 @@ fn ac5_seeded_obstacles(harness: &Harness) -> CheckResult {
     ))
 }
 
+const CRASH_OBSTACLES: [&str; 4] = ["tree", "bigtree", "stump", "rock"];
+
+/// Steer the skier toward the nearest upcoming obstacle of one of `types`, by reading
+/// the obstacle coordinates the game itself reports. No setup hints, no shortcut keys —
+/// this is ordinary navigation a human could perform from what is on screen.
+fn steer_toward_obstacle(state: &GameState, types: &[&str]) -> i64 {
+    let target = state
+        .obstacles
+        .iter()
+        .filter(|o| types.contains(&o.kind.as_str()) && o.y >= state.skier.y)
+        .min_by(|a, b| {
+            (a.y - state.skier.y)
+                .partial_cmp(&(b.y - state.skier.y))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+    match target {
+        Some(o) => {
+            let dx = o.x - state.skier.x;
+            if dx > 0.25 {
+                1
+            } else if dx < -0.25 {
+                -1
+            } else {
+                0
+            }
+        }
+        None => 0,
+    }
+}
+
+/// Steer away from a close obstacle directly ahead so the skier can keep skiing while a
+/// check measures speed. Reads only reported obstacle coordinates; no hints.
+fn steer_away_from_obstacle(state: &GameState) -> i64 {
+    let threat = state
+        .obstacles
+        .iter()
+        .filter(|o| {
+            o.y >= state.skier.y && o.y - state.skier.y < 16.0 && (o.x - state.skier.x).abs() < 4.0
+        })
+        .min_by(|a, b| {
+            (a.y - state.skier.y)
+                .partial_cmp(&(b.y - state.skier.y))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+    match threat {
+        Some(o) => {
+            if o.x >= state.skier.x {
+                -1
+            } else {
+                1
+            }
+        }
+        None => 0,
+    }
+}
+
 fn ac6_collision_crashes(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    init(
-        &mut client,
-        6,
-        Some(json!({ "scenario": "collision-tree" })),
-    )?;
-    for _ in 0..100 {
-        let s = step(&mut client, 0, false, false)?.state;
+    let mut s = init(&mut client, 6, None)?.state;
+    for _ in 0..2000 {
+        let steer = steer_toward_obstacle(&s, &CRASH_OBSTACLES);
+        s = step(&mut client, steer, false, false)?.state;
         if s.skier.mode == "crashed" {
             let crash_distance = s.distance_m;
             let crash_tick = s.tick;
@@ -708,24 +758,25 @@ fn ac6_collision_crashes(harness: &Harness) -> CheckResult {
                 }
             }
             return Ok(format!(
-                "crashed at tick {} and distance halted at {}",
+                "navigated into a tree/stump and crashed at tick {} and distance halted at {}",
                 crash_tick, crash_distance
             ));
         }
     }
-    Err("no tree/stump crash observed in collision-tree scenario within 100 ticks".into())
+    Err("no tree/stump crash observed after navigating into obstacles for 2000 ticks".into())
 }
 
 fn ac7_crash_recovery(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    init(
-        &mut client,
-        7,
-        Some(json!({ "scenario": "collision-tree" })),
-    )?;
+    let mut s = init(&mut client, 7, None)?.state;
     let mut crashed_at: Option<u64> = None;
-    for _ in 0..240 {
-        let s = step(&mut client, 0, false, false)?.state;
+    for _ in 0..2000 {
+        let steer = if crashed_at.is_some() {
+            0
+        } else {
+            steer_toward_obstacle(&s, &CRASH_OBSTACLES)
+        };
+        s = step(&mut client, steer, false, false)?.state;
         if s.skier.mode == "crashed" && crashed_at.is_none() {
             crashed_at = Some(s.tick);
         }
@@ -740,22 +791,30 @@ fn ac7_crash_recovery(harness: &Harness) -> CheckResult {
     }
     match crashed_at {
         Some(tick) => Err(format!(
-            "crashed at tick {} but did not recover within 240 ticks",
+            "crashed at tick {} but did not recover within 2000 ticks",
             tick
         )
         .into()),
-        None => Err("no crash observed, so recovery could not be verified".into()),
+        None => Err(
+            "no crash observed while navigating obstacles, so recovery could not be verified"
+                .into(),
+        ),
     }
 }
 
 fn ac8_speed_cap(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    let start = init(&mut client, 8, None)?.state.skier.speed;
+    let mut s = init(&mut client, 8, None)?.state;
+    let start = s.skier.speed;
     let mut speeds = Vec::new();
-    for _ in 0..120 {
-        let s = step(&mut client, 0, false, false)?.state;
+    for _ in 0..240 {
+        let steer = steer_away_from_obstacle(&s);
+        s = step(&mut client, steer, false, false)?.state;
         if s.skier.mode == "skiing" {
             speeds.push(s.skier.speed);
+        }
+        if speeds.len() >= 120 {
+            break;
         }
     }
     if speeds.len() < 60 {
@@ -804,17 +863,22 @@ fn ac9_boost_exceeds_cap(harness: &Harness) -> CheckResult {
 
 fn ac10_ramp_airborne_land(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    init(&mut client, 10, Some(json!({ "scenario": "ramp" })))?;
+    let mut s = init(&mut client, 10, None)?.state;
     let mut airborne_at: Option<u64> = None;
-    for _ in 0..180 {
-        let s = step(&mut client, 0, false, true)?.state;
+    for _ in 0..2000 {
+        let steer = if airborne_at.is_some() {
+            0
+        } else {
+            steer_toward_obstacle(&s, &["ramp"])
+        };
+        s = step(&mut client, steer, false, true)?.state;
         if s.skier.mode == "airborne" && airborne_at.is_none() {
             airborne_at = Some(s.tick);
         }
         if let Some(tick) = airborne_at {
             if s.tick > tick && s.skier.mode == "skiing" {
                 return Ok(format!(
-                    "airborne at tick {}, landed by tick {}",
+                    "navigated onto a ramp, airborne at tick {}, landed by tick {}",
                     tick, s.tick
                 ));
             }
@@ -822,29 +886,33 @@ fn ac10_ramp_airborne_land(harness: &Harness) -> CheckResult {
     }
     match airborne_at {
         Some(tick) => Err(format!(
-            "airborne at tick {} but did not land within 180 ticks",
+            "airborne at tick {} but did not land within 2000 ticks",
             tick
         )
         .into()),
-        None => Err("no airborne state observed in ramp scenario".into()),
+        None => Err("no airborne state observed after navigating onto ramps".into()),
     }
 }
 
 fn ac11_style_scoring(harness: &Harness) -> CheckResult {
     let mut ramp = DriverClient::spawn(harness)?;
-    let start_style = init(&mut ramp, 11, Some(json!({ "scenario": "ramp" })))?
-        .state
-        .style;
+    let mut rs = init(&mut ramp, 11, None)?.state;
+    let start_style = rs.style;
     let mut airborne_seen = false;
     let mut landing_gain = false;
     let mut max_style = start_style;
-    for _ in 0..180 {
-        let s = step(&mut ramp, 0, false, true)?.state;
-        max_style = max_style.max(s.style);
-        if s.skier.mode == "airborne" {
+    for _ in 0..2000 {
+        let steer = if airborne_seen {
+            0
+        } else {
+            steer_toward_obstacle(&rs, &["ramp"])
+        };
+        rs = step(&mut ramp, steer, false, true)?.state;
+        max_style = max_style.max(rs.style);
+        if rs.skier.mode == "airborne" {
             airborne_seen = true;
         }
-        if airborne_seen && s.skier.mode == "skiing" && s.style > start_style {
+        if airborne_seen && rs.skier.mode == "skiing" && rs.style > start_style {
             landing_gain = true;
             break;
         }
@@ -858,21 +926,17 @@ fn ac11_style_scoring(harness: &Harness) -> CheckResult {
     }
 
     let mut crash = DriverClient::spawn(harness)?;
-    let mut before_crash_style = init(
-        &mut crash,
-        11,
-        Some(json!({ "scenario": "collision-tree" })),
-    )?
-    .state
-    .style;
-    for _ in 0..120 {
-        let s = step(&mut crash, 0, false, false)?.state;
-        if s.skier.mode != "crashed" {
-            before_crash_style = s.style;
-        } else if s.style < before_crash_style {
+    let mut cs = init(&mut crash, 11, None)?.state;
+    let mut before_crash_style = cs.style;
+    for _ in 0..2000 {
+        let steer = steer_toward_obstacle(&cs, &CRASH_OBSTACLES);
+        cs = step(&mut crash, steer, false, false)?.state;
+        if cs.skier.mode != "crashed" {
+            before_crash_style = cs.style;
+        } else if cs.style < before_crash_style {
             return Ok(format!(
                 "landing increased style above {}; crash deducted {}→{}",
-                start_style, before_crash_style, s.style
+                start_style, before_crash_style, cs.style
             ));
         }
     }
@@ -949,30 +1013,32 @@ fn ac13_monster_pursues(harness: &Harness) -> CheckResult {
 
 fn ac14_monster_eats(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    init(
-        &mut client,
-        14,
-        Some(json!({ "scenario": "monster-contact" })),
-    )?;
-    for _ in 0..240 {
+    init(&mut client, 14, None)?;
+    // Reach the yeti the brutal way: descend to 2000m so it spawns, then stop evading
+    // and let it close contact. No scenario hint.
+    let mut spawned = false;
+    for _ in 0..6000 {
         let s = step(&mut client, 0, false, false)?.state;
-        if s.skier.mode == "eaten" && s.game_over {
+        if s.monster.is_some() && s.distance_m >= 2000.0 {
+            spawned = true;
+        }
+        if spawned && s.skier.mode == "eaten" && s.game_over {
             return Ok(format!("skier eaten and gameOver=true at tick {}", s.tick));
         }
     }
-    Err("monster-contact scenario did not produce eaten/gameOver within 240 ticks".into())
+    if spawned {
+        Err("monster spawned but did not eat the non-evading skier within 6000 ticks".into())
+    } else {
+        Err("did not reach 2000m to spawn the monster within 6000 neutral ticks".into())
+    }
 }
 
 fn ac15_monster_flees(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
-    init(
-        &mut client,
-        15,
-        Some(json!({ "scenario": "monster-contact" })),
-    )?;
+    init(&mut client, 15, None)?;
     let mut eaten_seen = false;
     let mut first_flee_distance: Option<f64> = None;
-    for _ in 0..320 {
+    for _ in 0..6000 {
         let s = step(&mut client, 0, false, false)?.state;
         if s.skier.mode == "eaten" || s.game_over {
             eaten_seen = true;
@@ -1115,11 +1181,14 @@ fn max_speed_for(
     steps_count: usize,
 ) -> Result<f64, BoxError> {
     let mut client = DriverClient::spawn(harness)?;
-    init(&mut client, seed, None)?;
+    let mut s = init(&mut client, seed, None)?.state;
     let mut max_speed = f64::NEG_INFINITY;
     for _ in 0..steps_count {
-        let s = step(&mut client, 0, boost, false)?.state;
-        max_speed = max_speed.max(s.skier.speed);
+        let steer = steer_away_from_obstacle(&s);
+        s = step(&mut client, steer, boost, false)?.state;
+        if s.skier.mode == "skiing" {
+            max_speed = max_speed.max(s.skier.speed);
+        }
     }
     if !max_speed.is_finite() {
         return Err("max speed was not finite".into());

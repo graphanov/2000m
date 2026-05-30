@@ -25,27 +25,34 @@ Run by Hermes independently of the builder's self-report:
 - `cargo build` in `conformance/` — PASS (clean).
 - Conformance scorer vs stub driver — **determinism PASS** (107 canonical GameState snapshots
   matched byte-for-byte across two independent driver processes) and **3/16 ACs passed**
-  (AC1/AC2/AC3 pass; AC4–AC16 fail with specific mechanical reasons, e.g. "distance reached
-  2000m but monster remained null", "boosted max 1 did not exceed normal max 1"). The partial
-  pass count proves the suite discriminates rather than rubber-stamping.
+  (AC1/AC2/AC3 pass; AC4–AC16 fail with specific mechanical reasons). The partial pass count
+  proves the suite discriminates rather than rubber-stamping.
+- **Brutal-mode passability proof** — a throwaway correct reference Rust driver (built in `/tmp`,
+  never committed, never a contender) scored **16/16 with determinism PASS** on the hint-free
+  suite, reaching every mechanic through real navigation (e.g. "navigated into a tree/stump and
+  crashed", "navigated onto a ramp", "monster converged from distance 26.5 to 1.5", "skier
+  eaten"). This proves the no-hint suite is hard but fair, not impossible. Reference torn down
+  after the proof.
 - Reproducibility — running the scorer twice produced byte-identical machine JSON.
-- Minimality — stub `src/main.rs` is 113 lines and always emits `"monster":null` with no
-  collision/ramp/monster logic; the real engineering is the 1238-line conformance scorer. OMX
-  did NOT build a full reference game.
+- Minimality — stub `src/main.rs` always emits `"monster":null` with no collision/ramp/monster
+  logic; the real engineering is the conformance scorer. OMX did NOT build a full reference game.
 - No copyrighted assets — repo scan for `.png/.bmp/.wav/.mp3/.gif/.exe/.ico` found none.
 - README honest scope — states "does not measure general intelligence," Rust target, separate
   human-feel track, and no copyrighted assets.
 - `./verify.sh --standard` — 6 pass / 0 fail / 0 warn.
 - Boundary respect — OMX did not modify MISSION/committed plans, did not close/commit/push.
 
-## Design decision flagged for the owner (not a defect)
+## Owner-directed brutal-mode hardening (no hints)
 
-The protocol's `init.config.scenario` hints (`collision-tree`, `ramp`, `monster-contact`) let the
-conformance suite request a fast path to a mechanic for black-box testing. This is a reasonable
-way to make isolated mechanics observable through the protocol boundary; the spec notes a natural
-implementation can pass without special-casing the hints. Owner may want to eyeball whether this
-is acceptable for v0 or should be tightened later (e.g. a model could special-case the scenario
-flag rather than implement the mechanic generally). Recorded as a known design choice, not a flaw.
+OMX's first build exposed isolated mechanics to the suite via `init.config.scenario` hints
+(`collision-tree`, `ramp`, `monster-contact`) and a `slopeWidthM` wrap hint. The owner rejected
+any hinting: no version of the benchmark should tell a model how to reach a mechanic. Hermes
+removed all config hints and rewrote the 7 hint-using checks (AC4 wrap, AC6/AC7 collision,
+AC10/AC11 ramp, AC14/AC15 monster contact) to reach each mechanic through ordinary play — the
+suite reads the seeded obstacle/monster coordinates the game reports and navigates the skier into
+them. The protocol spec now documents an explicit coordinate convention plus a "brutal-mode
+scoring (no hints)" contract; RULES.md adds a "No hints (brutal mode)" section. Discrimination is
+preserved (correct reference 16/16, stub 3/16) and determinism still holds.
 
 ## Outcome
 
@@ -60,4 +67,3 @@ copyrighted assets shipped.
 - Owner gate: review and merge the PR for `build/harness-and-conformance`.
 - After merge: create `graphanov/2000m-codex-gpt55`, seed the 2000m task into `osc evolve`, run
   Codex/GPT-5.5 for up to 8 generations, capture the real Gen1→Gen8 AC-pass trajectory.
-- Optional: decide whether `init.config.scenario` hints stay in v0 or are tightened.
