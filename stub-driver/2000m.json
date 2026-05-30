@@ -1,0 +1,9 @@
+{
+  "protocolVersion": "2000m.driver.v0",
+  "driver": {
+    "command": "cargo",
+    "args": ["run", "--quiet"]
+  },
+  "language": "rust",
+  "notes": "Minimal harness smoke-test stub; intentionally passes only the lowest ACs."
+}

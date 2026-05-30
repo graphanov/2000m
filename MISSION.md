@@ -33,3 +33,4 @@ iconic and most testable moment.
 ## Changelog
 
 <!-- append YYYY-MM-DD entries below this line -->
+- 2026-05-30: closed 001-benchmark-harness-and-conformance — Build 2000m benchmark harness, conformance suite, and stub driver
