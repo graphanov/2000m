@@ -947,9 +947,22 @@ fn run_suite(harness: &Harness) -> SuiteResult {
         pass_count as f64 / total as f64
     };
 
-    // Composite: pass_rate × 40 + quality × 0.3
-    // (efficiency and convergence require external data; placeholder weights)
-    let composite_score = pass_rate * 40.0 + quality_avg * 0.3;
+    let efficiency_avg = if total == 0 {
+        0.0
+    } else {
+        acs.iter()
+            .map(|ac| ac.breakdown.performance as f64)
+            .sum::<f64>()
+            / total as f64
+    };
+
+    // Composite: pass rate (40%) + quality (30%) + efficiency (20%)
+    // + convergence speed (10%). The standalone conformance runner scores a
+    // single artifact, so it awards the neutral full convergence component;
+    // multi-generation result repositories can override this with trajectory data.
+    let convergence_score = 100.0;
+    let composite_score =
+        pass_rate * 40.0 + quality_avg * 0.3 + efficiency_avg * 0.2 + convergence_score * 0.1;
 
     SuiteResult {
         protocol_version: PROTOCOL_VERSION.to_string(),
