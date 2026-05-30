@@ -348,9 +348,8 @@ impl DriverClient {
             }
         };
 
-        let response: Value = serde_json::from_str(&response_line).map_err(|err| {
-            format!("driver emitted invalid JSON: {}", err)
-        })?;
+        let response: Value = serde_json::from_str(&response_line)
+            .map_err(|err| format!("driver emitted invalid JSON: {}", err))?;
         Ok(response)
     }
 
@@ -738,10 +737,7 @@ impl Harness {
 
 fn run_suite(harness: &Harness) -> SuiteResult {
     let determinism = match check_determinism(harness) {
-        Ok(detail) => Verdict {
-            pass: true,
-            detail,
-        },
+        Ok(detail) => Verdict { pass: true, detail },
         Err(err) => Verdict {
             pass: false,
             detail: err.to_string(),
@@ -751,37 +747,157 @@ fn run_suite(harness: &Harness) -> SuiteResult {
     let mut acs = Vec::new();
 
     // Tier 1: Core Mechanics (AC1-AC16)
-    acs.push(run_ac(harness, "AC1", "skier entity with position state", ac1_skier_exists));
-    acs.push(run_ac(harness, "AC2", "steering moves skier deterministically", ac2_steering_moves));
-    acs.push(run_ac(harness, "AC3", "slope scrolls while skiing", ac3_slope_scrolls));
-    acs.push(run_ac(harness, "AC4", "horizontal wrap", ac4_horizontal_wrap));
-    acs.push(run_ac(harness, "AC5", "seeded obstacle field", ac5_seeded_obstacles));
-    acs.push(run_ac(harness, "AC6", "collision detection", ac6_collision_crashes));
+    acs.push(run_ac(
+        harness,
+        "AC1",
+        "skier entity with position state",
+        ac1_skier_exists,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC2",
+        "steering moves skier deterministically",
+        ac2_steering_moves,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC3",
+        "slope scrolls while skiing",
+        ac3_slope_scrolls,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC4",
+        "horizontal wrap",
+        ac4_horizontal_wrap,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC5",
+        "seeded obstacle field",
+        ac5_seeded_obstacles,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC6",
+        "collision detection",
+        ac6_collision_crashes,
+    ));
     acs.push(run_ac(harness, "AC7", "crash recovery", ac7_crash_recovery));
     acs.push(run_ac(harness, "AC8", "speed cap", ac8_speed_cap));
-    acs.push(run_ac(harness, "AC9", "boost exceeds normal cap", ac9_boost_exceeds_cap));
-    acs.push(run_ac(harness, "AC10", "ramp airborne and landing", ac10_ramp_airborne_land));
+    acs.push(run_ac(
+        harness,
+        "AC9",
+        "boost exceeds normal cap",
+        ac9_boost_exceeds_cap,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC10",
+        "ramp airborne and landing",
+        ac10_ramp_airborne_land,
+    ));
     acs.push(run_ac(harness, "AC11", "style scoring", ac11_style_scoring));
-    acs.push(run_ac(harness, "AC12", "monster spawns at 2000m", ac12_monster_spawns));
-    acs.push(run_ac(harness, "AC13", "monster pursues skier", ac13_monster_pursues));
-    acs.push(run_ac(harness, "AC14", "monster eats skier", ac14_monster_eats));
-    acs.push(run_ac(harness, "AC15", "monster flees after eating", ac15_monster_flees));
-    acs.push(run_ac(harness, "AC16", "reset reproducible", ac16_reset_reproducible));
+    acs.push(run_ac(
+        harness,
+        "AC12",
+        "monster spawns at 2000m",
+        ac12_monster_spawns,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC13",
+        "monster pursues skier",
+        ac13_monster_pursues,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC14",
+        "monster eats skier",
+        ac14_monster_eats,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC15",
+        "monster flees after eating",
+        ac15_monster_flees,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC16",
+        "reset reproducible",
+        ac16_reset_reproducible,
+    ));
 
     // Tier 2: Edge Cases and Performance (AC17-AC22)
-    acs.push(run_ac(harness, "AC17", "high-speed tunneling prevention", ac17_tunneling_prevention));
-    acs.push(run_ac(harness, "AC18", "dense field performance", ac18_dense_field_performance));
-    acs.push(run_ac(harness, "AC19", "monster pursuit under evasion", ac19_monster_evasion));
-    acs.push(run_ac(harness, "AC20", "determinism over long runs", ac20_long_determinism));
-    acs.push(run_ac(harness, "AC21", "crash recovery under load", ac21_crash_under_load));
-    acs.push(run_ac(harness, "AC22", "monster spawn timing precision", ac22_spawn_precision));
+    acs.push(run_ac(
+        harness,
+        "AC17",
+        "high-speed tunneling prevention",
+        ac17_tunneling_prevention,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC18",
+        "dense field performance",
+        ac18_dense_field_performance,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC19",
+        "monster pursuit under evasion",
+        ac19_monster_evasion,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC20",
+        "determinism over long runs",
+        ac20_long_determinism,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC21",
+        "crash recovery under load",
+        ac21_crash_under_load,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC22",
+        "monster spawn timing precision",
+        ac22_spawn_precision,
+    ));
 
     // Tier 3: Polish and Optimization (AC23-AC28)
-    acs.push(run_ac(harness, "AC23", "input responsiveness", ac23_input_responsiveness));
-    acs.push(run_ac(harness, "AC24", "collision forgiveness", ac24_collision_forgiveness));
-    acs.push(run_ac(harness, "AC25", "animation smoothness", ac25_animation_smoothness));
-    acs.push(run_ac(harness, "AC26", "deterministic replay accuracy", ac26_replay_accuracy));
-    acs.push(run_ac(harness, "AC27", "performance budget", ac27_performance_budget));
+    acs.push(run_ac(
+        harness,
+        "AC23",
+        "input responsiveness",
+        ac23_input_responsiveness,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC24",
+        "collision forgiveness",
+        ac24_collision_forgiveness,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC25",
+        "animation smoothness",
+        ac25_animation_smoothness,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC26",
+        "deterministic replay accuracy",
+        ac26_replay_accuracy,
+    ));
+    acs.push(run_ac(
+        harness,
+        "AC27",
+        "performance budget",
+        ac27_performance_budget,
+    ));
     acs.push(run_ac(harness, "AC28", "visual polish", ac28_visual_polish));
 
     let pass_count = acs.iter().filter(|ac| ac.pass).count();
@@ -853,10 +969,7 @@ fn render_human_summary(result: &SuiteResult) -> String {
         "Mechanical ACs: {}/{} passed\n",
         result.pass_count, result.total_acs
     ));
-    out.push_str(&format!(
-        "Composite Score: {:.1}\n",
-        result.composite_score
-    ));
+    out.push_str(&format!("Composite Score: {:.1}\n", result.composite_score));
     for ac in &result.acs {
         let pass_str = if ac.pass { "PASS" } else { "FAIL" };
         out.push_str(&format!(
@@ -1126,7 +1239,9 @@ fn ac4_horizontal_wrap(harness: &Harness) -> CheckResult {
                 breakdown,
             })
         }
-        None => Err("no horizontal wrap discontinuity observed after 1200 right-steer ticks".into()),
+        None => {
+            Err("no horizontal wrap discontinuity observed after 1200 right-steer ticks".into())
+        }
     }
 }
 
@@ -1253,9 +1368,7 @@ fn ac7_crash_recovery(harness: &Harness) -> CheckResult {
                     quality: breakdown.composite(),
                     detail: format!(
                         "crashed at tick {}, recovered by tick {} ({} ticks)",
-                        tick,
-                        s.tick,
-                        recovery_time
+                        tick, s.tick, recovery_time
                     ),
                     breakdown,
                 });
@@ -1301,10 +1414,7 @@ fn ac8_speed_cap(harness: &Harness) -> CheckResult {
         )
         .into());
     }
-    let max_speed = speeds
-        .iter()
-        .copied()
-        .fold(f64::NEG_INFINITY, f64::max);
+    let max_speed = speeds.iter().copied().fold(f64::NEG_INFINITY, f64::max);
     let tail = &speeds[speeds.len() - 20..];
     let tail_min = tail.iter().copied().fold(f64::INFINITY, f64::min);
     let tail_max = tail.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -1417,11 +1527,7 @@ fn ac10_ramp_airborne_land(harness: &Harness) -> CheckResult {
         if let Some(tick) = airborne_at {
             if s.tick > tick && s.skier.mode == "skiing" {
                 // Quality: check for speed continuity (parabolic trajectory)
-                let precision = if !airborne_speeds.is_empty() {
-                    90
-                } else {
-                    70
-                };
+                let precision = if !airborne_speeds.is_empty() { 90 } else { 70 };
                 let breakdown = QualityBreakdown {
                     basic: 100,
                     precision,
@@ -1654,7 +1760,10 @@ fn ac14_monster_eats(harness: &Harness) -> CheckResult {
             spawned = true;
         }
         if spawned && s.skier.mode == "eaten" && s.game_over {
-            let has_event = s.events.iter().any(|e| e.contains("eat") || e.contains("monster"));
+            let has_event = s
+                .events
+                .iter()
+                .any(|e| e.contains("eat") || e.contains("monster"));
             let breakdown = QualityBreakdown {
                 basic: 100,
                 precision: 90,
@@ -1755,11 +1864,7 @@ fn ac16_reset_reproducible(harness: &Harness) -> CheckResult {
         return Err(format!("reset tick was {}, expected 0", reset_state.tick).into());
     }
     if reset_state.distance_m.abs() > 0.001 {
-        return Err(format!(
-            "reset distance was {}, expected 0",
-            reset_state.distance_m
-        )
-        .into());
+        return Err(format!("reset distance was {}, expected 0", reset_state.distance_m).into());
     }
     if reset_state.style.abs() > 0.001 {
         return Err(format!("reset style was {}, expected 0", reset_state.style).into());
@@ -1890,7 +1995,8 @@ fn ac18_dense_field_performance(harness: &Harness) -> CheckResult {
     init(&mut client, 18, None)?;
 
     // Try challenge for dense field; if unsupported, test with normal field
-    let challenge_ok = challenge(&mut client, "dense_field", &json!({"obstacleCount": 100})).is_ok();
+    let challenge_ok =
+        challenge(&mut client, "dense_field", &json!({"obstacleCount": 100})).is_ok();
 
     let mut frame_times_ns: Vec<f64> = Vec::new();
     let mut max_obstacles = 0usize;
@@ -1918,13 +2024,10 @@ fn ac18_dense_field_performance(harness: &Harness) -> CheckResult {
     // Check if driver reported quality metrics
     let driver_quality = {
         let mut check_client = DriverClient::spawn(harness)?;
-        init(&mut check_client, 18, None)?
-            .state
-            .quality
-            .is_some()
+        init(&mut check_client, 18, None)?.state.quality.is_some()
     };
 
-    let pass = avg_ms < 16.6;
+    let pass = avg_ms < 16.6 && max_obstacles >= 50;
     let perf_score = if avg_ms < 5.0 {
         95
     } else if avg_ms < 10.0 {
@@ -1937,7 +2040,11 @@ fn ac18_dense_field_performance(harness: &Harness) -> CheckResult {
 
     let breakdown = QualityBreakdown {
         basic: if pass { 100 } else { 0 },
-        precision: if challenge_ok && max_obstacles >= 50 { 90 } else { 70 },
+        precision: if challenge_ok && max_obstacles >= 50 {
+            90
+        } else {
+            70
+        },
         performance: perf_score,
         polish: if driver_quality { 85 } else { 60 },
     };
@@ -1960,8 +2067,12 @@ fn ac19_monster_evasion(harness: &Harness) -> CheckResult {
     init(&mut client, 19, None)?;
 
     // Try early monster spawn challenge
-    let challenge_ok =
-        challenge(&mut client, "evasion_course", &json!({"monsterDistance": 100})).is_ok();
+    let challenge_ok = challenge(
+        &mut client,
+        "evasion_course",
+        &json!({"monsterDistance": 100}),
+    )
+    .is_ok();
 
     let mut monster_spawned = false;
     let mut evasion_ticks = 0;
@@ -2111,7 +2222,11 @@ fn ac20_long_determinism(harness: &Harness) -> CheckResult {
     }
 }
 
-fn collect_long_stream(harness: &Harness, seed: i64, ticks: usize) -> Result<Vec<String>, BoxError> {
+fn collect_long_stream(
+    harness: &Harness,
+    seed: i64,
+    ticks: usize,
+) -> Result<Vec<String>, BoxError> {
     let mut client = DriverClient::spawn(harness)?;
     init(&mut client, seed, None)?;
     let mut stream = Vec::with_capacity(ticks);
@@ -2151,7 +2266,7 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
         let next = step(&mut client, steer, false, false)?;
         let ns = &next.state;
 
-        if ns.skier.mode == "crashed" {
+        if ns.skier.mode == "crashed" && s.skier.mode != "crashed" {
             crashes += 1;
             // Check for state corruption
             if !ns.skier.x.is_finite() || !ns.skier.y.is_finite() {
@@ -2283,7 +2398,11 @@ fn ac23_input_responsiveness(harness: &Harness) -> CheckResult {
     let n = latencies_ns.len() as f64;
     let avg_ns = latencies_ns.iter().sum::<f64>() / n;
     let avg_ms = avg_ns / 1_000_000.0;
-    let max_ms = latencies_ns.iter().copied().fold(f64::NEG_INFINITY, f64::max) / 1_000_000.0;
+    let max_ms = latencies_ns
+        .iter()
+        .copied()
+        .fold(f64::NEG_INFINITY, f64::max)
+        / 1_000_000.0;
 
     let pass = avg_ms < 50.0 && responses_detected > 80;
 
@@ -2423,10 +2542,7 @@ fn ac25_animation_smoothness(harness: &Harness) -> CheckResult {
         / n;
 
     // Dropped frames (> 33.3ms = more than 2 frames at 60fps)
-    let dropped_frames = frame_times_ns
-        .iter()
-        .filter(|t| **t > 33_300_000.0)
-        .count();
+    let dropped_frames = frame_times_ns.iter().filter(|t| **t > 33_300_000.0).count();
 
     // Acceleration smoothness
     let mut accels: Vec<f64> = Vec::new();
@@ -2540,7 +2656,13 @@ fn ac26_replay_accuracy(harness: &Harness) -> CheckResult {
         .as_ref()
         .map(|r| r.state_checksum == expected_checksum || r.state_checksum == replayed_checksum);
 
-    let pass = checksums_match;
+    let driver_replay_payload_present = replay_data
+        .as_ref()
+        .map(|r| !r.input_sequence.is_empty() && r.end_tick >= r.start_tick)
+        .unwrap_or(false);
+
+    let pass =
+        checksums_match && driver_replay_match == Some(true) && driver_replay_payload_present;
 
     let precision = if checksums_match {
         if driver_replay_match == Some(true) {
@@ -2623,7 +2745,13 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let p99_idx = (n * 0.99) as usize;
     let p99_ms = sorted.get(p99_idx).copied().unwrap_or(0.0) / 1_000_000.0;
 
-    let pass = avg_ms < 16.6;
+    let has_profile = profile_data.is_some();
+    let pass = avg_ms < 16.6
+        && p99_ms < 20.0
+        && has_profile
+        && total_allocations == 0
+        && peak_memory > 0
+        && peak_memory < 50_000_000;
 
     let precision = if total_allocations == 0 && has_quality {
         100
