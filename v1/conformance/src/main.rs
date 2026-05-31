@@ -149,6 +149,16 @@ struct ProtocolState {
     canonical: String,
 }
 
+fn canonical_state_value(mut value: Value) -> Value {
+    if let Some(obj) = value.as_object_mut() {
+        // `quality` is optional telemetry. It can include timings, allocation
+        // counters, or other runtime observations that are useful for scoring
+        // but should not affect gameplay determinism/replay canonicalization.
+        obj.remove("quality");
+    }
+    value
+}
+
 #[derive(Debug, Serialize)]
 struct SuiteResult {
     #[serde(rename = "protocolVersion")]
@@ -326,7 +336,7 @@ impl DriverClient {
             )
         })?;
         validate_state(&state)?;
-        let canonical = serde_json::to_string(&state_value)?;
+        let canonical = serde_json::to_string(&canonical_state_value(state_value.clone()))?;
         Ok(ProtocolState {
             state,
             state_value,
