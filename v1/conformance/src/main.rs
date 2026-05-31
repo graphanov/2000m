@@ -2216,7 +2216,7 @@ fn ac19_monster_evasion(harness: &Harness) -> CheckResult {
             last_monster_pos = Some((m.x, m.y));
 
             let dist = point_distance(next.skier.x, next.skier.y, m.x, m.y);
-            if dist > 30.0 {
+            if dist > 50.0 {
                 evasion_ticks += 1;
             }
 
