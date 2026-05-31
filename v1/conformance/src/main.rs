@@ -475,6 +475,23 @@ fn decode_replay_inputs(encoded: &str) -> Result<Vec<(i64, bool, bool)>, BoxErro
 
 const CRASH_OBSTACLES: [&str; 4] = ["tree", "bigtree", "stump", "rock"];
 
+fn default_obstacle_width(kind: &str) -> f64 {
+    match kind {
+        "tree" => 2.0,
+        "bigtree" => 4.0,
+        "stump" => 1.5,
+        "rock" => 3.0,
+        "mogul" => 2.0,
+        "ramp" => 4.0,
+        _ => 2.0,
+    }
+}
+
+fn obstacle_width(obs: &Obstacle) -> f64 {
+    obs.width
+        .unwrap_or_else(|| default_obstacle_width(&obs.kind))
+}
+
 fn steer_toward_obstacle(state: &GameState, types: &[&str]) -> i64 {
     let target = state
         .obstacles
@@ -513,7 +530,7 @@ fn steer_near_obstacle_margin(state: &GameState, types: &[&str]) -> i64 {
 
     match target {
         Some(o) => {
-            let half_width = o.width.unwrap_or(1.5) / 2.0;
+            let half_width = obstacle_width(o) / 2.0;
             let clearance = half_width + 0.5;
             let side = if state.skier.x <= o.x { -1.0 } else { 1.0 };
             let target_x = o.x + side * clearance;
@@ -2687,7 +2704,7 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
         for obs in &s.obstacles {
             if obstacle_crossed_skier_path(&s, &next, obs) {
                 let margin = (next.skier.x - obs.x).abs();
-                let obs_half_width = obs.width.unwrap_or(1.5) / 2.0;
+                let obs_half_width = obstacle_width(obs) / 2.0;
                 if margin > obs_half_width && margin < obs_half_width + 1.0 {
                     near_margin_this_tick = true;
                     near_margin_passes += 1;
@@ -2714,7 +2731,7 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
                 });
             if let Some(obs) = nearest {
                 let actual_distance = point_distance(next.skier.x, next.skier.y, obs.x, obs.y);
-                let obs_half_width = obs.width.unwrap_or(1.5) / 2.0;
+                let obs_half_width = obstacle_width(obs) / 2.0;
                 if actual_distance > obs_half_width + 0.2 {
                     unfair_collisions += 1;
                 }
