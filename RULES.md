@@ -50,9 +50,11 @@ The ranked score is objective and reproducible per track:
 - seed-determinism must hold for the run to be trusted;
 - v0 checks AC1–AC16 mechanically through the driver protocol;
 - v1 checks AC1–AC28 and adds quality scoring across three tiers;
+- v1 skipped/untestable ACs count as zero in ranked composite denominators;
 - the primary v0 metric is the AC-pass trajectory across evolve generations;
-- v1 may additionally report quality average, efficiency, convergence, and a
-  composite score;
+- v1 may additionally report quality/composite fields, but standalone ranked
+  composite must remain machine-reproducible and must not use host wall-clock,
+  random OS state, or self-attested visual polish as a mechanical pass;
 - final pass count, generations-to-playable, generations-to-yeti, monotonicity,
   and generation efficiency may be reported as mechanical columns.
 

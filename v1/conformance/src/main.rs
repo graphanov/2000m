@@ -2,10 +2,11 @@
 // 28 acceptance criteria with quality scoring across 3 tiers
 //
 // Scoring model:
-// - Pass rate (40%): binary pass/fail
-// - Quality score (30%): 0-100 per AC
-// - Efficiency (20%): LOC × frame time
-// - Convergence (10%): generations to reach 80% pass rate
+// - Deterministic AC pass rate (70%): skipped ACs count as zero
+// - Quality average (30%): 0-100 per AC, including skipped ACs as zero
+//
+// Standalone v1 scoring intentionally excludes host wall-clock timing,
+// LOC efficiency, random OS state, and trajectory/convergence bonuses.
 
 #![allow(clippy::vec_init_then_push)]
 
@@ -648,86 +649,6 @@ fn obstacle_crossed_skier_path(previous: &GameState, next: &GameState, obs: &Obs
     )
 }
 
-fn is_source_file(path: &Path) -> bool {
-    matches!(
-        path.extension().and_then(|ext| ext.to_str()),
-        Some(
-            "rs" | "js"
-                | "jsx"
-                | "ts"
-                | "tsx"
-                | "py"
-                | "lua"
-                | "go"
-                | "java"
-                | "c"
-                | "cc"
-                | "cpp"
-                | "h"
-                | "hpp"
-                | "cs"
-                | "swift"
-                | "kt"
-                | "kts"
-                | "html"
-                | "css"
-        )
-    )
-}
-
-fn count_source_loc(root: &Path) -> usize {
-    fn visit(path: &Path, total: &mut usize) {
-        let Ok(entries) = fs::read_dir(path) else {
-            return;
-        };
-
-        for entry in entries.flatten() {
-            let path = entry.path();
-            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            if path.is_dir() {
-                if matches!(
-                    name,
-                    ".git" | "target" | "node_modules" | "dist" | "build" | ".next" | "vendor"
-                ) {
-                    continue;
-                }
-                visit(&path, total);
-            } else if is_source_file(&path) {
-                if let Ok(content) = fs::read_to_string(&path) {
-                    *total += content
-                        .lines()
-                        .filter(|line| {
-                            let trimmed = line.trim();
-                            !trimmed.is_empty()
-                                && !trimmed.starts_with("//")
-                                && !trimmed.starts_with('#')
-                        })
-                        .count();
-                }
-            }
-        }
-    }
-
-    let mut total = 0usize;
-    visit(root, &mut total);
-    total
-}
-
-fn measure_average_frame_ms(harness: &Harness) -> Option<f64> {
-    let mut client = DriverClient::spawn(harness).ok()?;
-    init(&mut client, 2701, None).ok()?;
-
-    let mut total_ns = 0.0;
-    let samples = 120usize;
-    for _ in 0..samples {
-        let before = Instant::now();
-        step(&mut client, 0, false, false).ok()?;
-        total_ns += before.elapsed().as_nanos() as f64;
-    }
-
-    Some((total_ns / samples as f64) / 1_000_000.0)
-}
-
 fn validate_state(s: &GameState) -> Result<(), BoxError> {
     if !s.skier.x.is_finite()
         || !s.skier.y.is_finite()
@@ -1118,37 +1039,28 @@ fn run_suite(harness: &Harness) -> SuiteResult {
 
     let pass_count = acs.iter().filter(|ac| ac.pass && !ac.skipped).count();
     let total = acs.len();
-    let scored_count = acs.iter().filter(|ac| !ac.skipped).count();
-    let quality_avg = if scored_count == 0 {
+
+    // Rank/composite scoring deliberately treats skipped ACs as zero-score ACs.
+    // Unsupported challenges are useful diagnostics, but they must not inflate
+    // a contender's ranked denominator by opting out of hard checks.
+    let quality_avg = if total == 0 {
         0.0
     } else {
-        acs.iter()
-            .filter(|ac| !ac.skipped)
-            .map(|ac| ac.quality as f64)
-            .sum::<f64>()
-            / scored_count as f64
+        acs.iter().map(|ac| ac.quality as f64).sum::<f64>() / total as f64
     };
 
-    let pass_rate = if scored_count == 0 {
+    let pass_rate = if total == 0 {
         0.0
     } else {
-        pass_count as f64 / scored_count as f64
+        pass_count as f64 / total as f64
     };
 
-    let source_loc = count_source_loc(&harness.game_dir);
-    let average_frame_ms = measure_average_frame_ms(harness);
-    let efficiency_avg = match (source_loc, average_frame_ms) {
-        (loc, Some(ms)) if loc > 0 && ms > 0.0 => (1000.0 / (loc as f64 * ms)).min(100.0),
-        _ => 0.0,
-    };
-
-    // Composite: pass rate (40%) + quality (30%) + efficiency (20%)
-    // + convergence speed (10%). The standalone conformance runner scores a
-    // single artifact, so it awards the neutral full convergence component;
-    // multi-generation result repositories can override this with trajectory data.
-    let convergence_score = 100.0;
-    let composite_score =
-        pass_rate * 40.0 + quality_avg * 0.3 + efficiency_avg * 0.2 + convergence_score * 0.1;
+    // Standalone v1 composite is machine-reproducible: no external wall-clock,
+    // LOC, OS state, or trajectory/convergence bonus. Multi-generation result
+    // repositories may layer separate trajectory fields on top, but this neutral
+    // scorer only blends deterministic AC pass rate and per-AC quality over all
+    // 28 ACs.
+    let composite_score = pass_rate * 70.0 + quality_avg * 0.3;
 
     SuiteResult {
         protocol_version: PROTOCOL_VERSION.to_string(),
@@ -3120,6 +3032,10 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let mut allocations_unavailable = false;
     let mut memory_available = false;
     let mut memory_unavailable = false;
+    let mut reported_avg_ns: Option<i64> = None;
+    let mut reported_p99_ns: Option<i64> = None;
+    let mut reported_profile_ticks: Option<u64> = None;
+    let mut reported_tick_nanos_samples: Vec<i64> = Vec::new();
 
     for _ in 0..1000 {
         let before = Instant::now();
@@ -3150,6 +3066,19 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
             match profile(&mut client, Some(1)) {
                 Ok(pm) => {
                     profile_samples += 1;
+                    let mut sample_ns = None;
+                    if pm.avg_tick_nanos >= 0 {
+                        sample_ns = Some(pm.avg_tick_nanos);
+                    }
+                    if pm.p99_tick_nanos >= 0 {
+                        sample_ns = Some(
+                            sample_ns
+                                .map_or(pm.p99_tick_nanos, |ns: i64| ns.max(pm.p99_tick_nanos)),
+                        );
+                    }
+                    if let Some(ns) = sample_ns {
+                        reported_tick_nanos_samples.push(ns);
+                    }
                     if pm.total_allocations >= 0 {
                         allocations_available = true;
                         total_allocations += pm.total_allocations;
@@ -3169,6 +3098,52 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
                     memory_unavailable = true;
                 }
             }
+        }
+    }
+
+    if profile_supported {
+        match profile(&mut client, Some(1000)) {
+            Ok(pm) => {
+                profile_samples += 1;
+                let full_window_profile = pm.window_ticks >= 1000;
+                reported_profile_ticks = Some(pm.window_ticks);
+                if full_window_profile && pm.avg_tick_nanos >= 0 {
+                    reported_avg_ns = Some(pm.avg_tick_nanos);
+                }
+                if full_window_profile && pm.p99_tick_nanos >= 0 {
+                    reported_p99_ns = Some(pm.p99_tick_nanos);
+                }
+                if pm.total_allocations >= 0 {
+                    allocations_available = true;
+                    total_allocations += pm.total_allocations;
+                }
+                if pm.peak_memory_bytes >= 0 {
+                    memory_available = true;
+                    peak_memory = peak_memory.max(pm.peak_memory_bytes);
+                }
+            }
+            Err(_) => {
+                allocations_unavailable = true;
+                memory_unavailable = true;
+            }
+        }
+    }
+
+    if !reported_tick_nanos_samples.is_empty()
+        && (reported_avg_ns.is_none() || reported_p99_ns.is_none())
+    {
+        let sample_count = reported_tick_nanos_samples.len() as i64;
+        if reported_avg_ns.is_none() {
+            let sum: i64 = reported_tick_nanos_samples.iter().sum();
+            reported_avg_ns = Some(sum / sample_count);
+        }
+        if reported_p99_ns.is_none() {
+            let mut sorted_reported = reported_tick_nanos_samples.clone();
+            sorted_reported.sort_unstable();
+            let p99_idx = ((sorted_reported.len() as f64) * 0.99) as usize;
+            reported_p99_ns = sorted_reported
+                .get(p99_idx.min(sorted_reported.len().saturating_sub(1)))
+                .copied();
         }
     }
 
@@ -3207,7 +3182,14 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let allocations_ok = !allocations_available || total_allocations == 0;
     let memory_ok = !memory_available || (peak_memory > 0 && peak_memory < 50_000_000);
 
-    let pass = avg_ms < 16.6 && p99_ms < 20.0 && max_obstacles >= 50 && allocations_ok && memory_ok;
+    // External wall-clock sampling is retained as a diagnostic probe only. The
+    // ranked AC pass uses deterministic driver-reported profile telemetry so the
+    // conformance result is not tied to the host machine running the scorer.
+    let reported_full_window_ok = matches!(reported_profile_ticks, Some(ticks) if ticks >= 1000);
+    let reported_perf_ok = reported_full_window_ok
+        && matches!(reported_avg_ns, Some(ns) if ns < 16_600_000)
+        && matches!(reported_p99_ns, Some(ns) if ns < 20_000_000);
+    let pass = max_obstacles >= 50 && allocations_ok && memory_ok && reported_perf_ok;
 
     let precision = if allocations_available && total_allocations == 0 && has_quality {
         100
@@ -3251,7 +3233,11 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
+            "reported_avg_ns={:?} reported_p99_ns={:?} reported_profile_ticks={:?} reported_full_window={} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
+            reported_avg_ns,
+            reported_p99_ns,
+            reported_profile_ticks,
+            reported_full_window_ok,
             avg_ms,
             p99_ms,
             max_obstacles,
@@ -3313,7 +3299,10 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
     let has_rich_events = total_event_types >= 4;
     let visual_feedback_events =
         particle_events + shake_events + style_events + near_miss_events + color_grading_events;
-    let pass = particle_events > 0 && shake_events > 0 && visual_feedback_events >= 3;
+    // Headless drivers can self-report event strings, but visual polish is a
+    // human/renderer judgment. Keep event richness as quality telemetry only;
+    // do not award a mechanical PASS from spoofable strings alone.
+    let pass = false;
 
     let precision = if total_event_types >= 6 {
         95
@@ -3351,7 +3340,7 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "event_types={} total_events={} visual_feedback_events={} [particles={}, shake={}, style={}, landing={}, crash={}, near_miss={}, color_grading={}] types={:?}",
+            "probe_only=true event_types={} total_events={} visual_feedback_events={} [particles={}, shake={}, style={}, landing={}, crash={}, near_miss={}, color_grading={}] types={:?}",
             total_event_types,
             total_events_seen,
             visual_feedback_events,

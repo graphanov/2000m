@@ -129,7 +129,7 @@ cargo run --manifest-path v1/conformance/Cargo.toml -- path/to/produced-game
 | [`protocol/2000m.driver.v0.md`](protocol/2000m.driver.v0.md) | Baseline v0 JSON-line driver protocol. |
 | [`protocol/2000m.json.schema.json`](protocol/2000m.json.schema.json) | Manifest checkpoint for produced-game launch metadata. |
 | [`conformance/`](conformance/) | v0 judge/scorer with 16 mechanical ACs. |
-| [`v1/`](v1/) | v1 protocol, 28-AC spec, design notes, and quality-scored conformance suite. |
+| [`v1/`](v1/) | v1 protocol, 28-AC spec, quality-scored conformance suite, and weak v1 stub smoke. |
 | [`stub-driver/`](stub-driver/) | Smoke-test skier that shows the v0 harness path works while failing most ACs. |
 | [`results/README.md`](results/README.md) | Scorecard format for benchmark rows. |
 | [`results/leaderboard.md`](results/leaderboard.md) | Rendered mechanical scoreboard. |
