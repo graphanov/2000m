@@ -3035,7 +3035,12 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
                 let _ = allocs;
             }
             if let Some(mem) = q.memory_bytes {
-                peak_memory = peak_memory.max(mem);
+                if mem >= 0 {
+                    memory_available = true;
+                    peak_memory = peak_memory.max(mem);
+                } else {
+                    memory_unavailable = true;
+                }
             }
         }
 
