@@ -546,6 +546,48 @@ fn point_distance(ax: f64, ay: f64, bx: f64, by: f64) -> f64 {
     (dx * dx + dy * dy).sqrt()
 }
 
+fn value_between(value: f64, start: f64, end: f64) -> bool {
+    let lo = start.min(end);
+    let hi = start.max(end);
+    value > lo && value < hi
+}
+
+fn matching_next_obstacle<'a>(next: &'a GameState, obs: &Obstacle) -> Option<&'a Obstacle> {
+    next.obstacles
+        .iter()
+        .filter(|candidate| candidate.kind == obs.kind && (candidate.x - obs.x).abs() < 5.0)
+        .min_by(|a, b| {
+            point_distance(obs.x, obs.y, a.x, a.y)
+                .partial_cmp(&point_distance(obs.x, obs.y, b.x, b.y))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+}
+
+fn obstacle_crossed_skier_path(previous: &GameState, next: &GameState, obs: &Obstacle) -> bool {
+    let skier_dy = next.skier.y - previous.skier.y;
+
+    if skier_dy.abs() > 1e-6 {
+        return value_between(obs.y, previous.skier.y, next.skier.y);
+    }
+
+    // Stationary screen-space skier: compare the obstacle's own screen-space
+    // motion against the stationary skier y coordinate. This avoids mixing
+    // cumulative distanceM with screen-relative obstacle y values.
+    if let Some(next_obs) = matching_next_obstacle(next, obs) {
+        if value_between(previous.skier.y, obs.y, next_obs.y) {
+            return true;
+        }
+    }
+
+    // Fallback for drivers that keep skier.y fixed but report obstacle y in
+    // world/downhill coordinates rather than screen-relative coordinates.
+    value_between(
+        obs.y,
+        previous.distance_m + previous.skier.y,
+        next.distance_m + next.skier.y,
+    )
+}
+
 fn validate_state(s: &GameState) -> Result<(), BoxError> {
     if !s.skier.x.is_finite()
         || !s.skier.y.is_finite()
@@ -2020,14 +2062,9 @@ fn ac17_tunneling_prevention(harness: &Harness) -> CheckResult {
         let steer = steer_toward_obstacle(&s, &["tree", "rock"]);
         let next = step(&mut client, steer, true, false)?.state;
 
-        // Detect tunneling: obstacle was between skier positions but no crash.
-        // Some produced games keep skier.y screen-stationary and advance
-        // distanceM as the downhill/world progress, so use whichever forward
-        // coordinate advanced farther for the swept test.
-        let previous_forward = s.skier.y.max(s.distance_m);
-        let next_forward = next.skier.y.max(next.distance_m);
+        // Detect tunneling: obstacle crossed the skier's swept path but no crash.
         for obs in &s.obstacles {
-            if obs.y > previous_forward && obs.y < next_forward {
+            if obstacle_crossed_skier_path(&s, &next, obs) {
                 let skier_passed_near = (s.skier.x - obs.x).abs() < 3.0;
                 if skier_passed_near && next.skier.mode != "crashed" {
                     tunneling_count += 1;
@@ -2622,10 +2659,8 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
         }
 
         // Track near-margin passes (skier passed very close without crashing)
-        let previous_forward = s.skier.y.max(s.distance_m);
-        let next_forward = next.skier.y.max(next.distance_m);
         for obs in &s.obstacles {
-            if obs.y > previous_forward && obs.y < next_forward {
+            if obstacle_crossed_skier_path(&s, &next, obs) {
                 let margin = (next.skier.x - obs.x).abs();
                 let obs_half_width = obs.width.unwrap_or(1.5) / 2.0;
                 if margin > obs_half_width && margin < obs_half_width + 1.0 {
