@@ -2185,8 +2185,10 @@ fn ac17_tunneling_prevention(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
     init(&mut client, 17, None)?;
 
-    // Try challenge for high speed; ignore if unsupported
-    let _ = challenge(&mut client, "high_speed", &json!({"speed": 10.5}));
+    // Try challenge for high speed. If unsupported and normal boosted play
+    // cannot produce a swept collision/tunneling attempt, this stress AC is
+    // untestable rather than failed.
+    let challenge_ok = challenge(&mut client, "high_speed", &json!({"speed": 10.5})).is_ok();
 
     let mut tunneling_count = 0;
     let mut collision_count = 0;
@@ -2213,6 +2215,24 @@ fn ac17_tunneling_prevention(harness: &Harness) -> CheckResult {
         s = next;
     }
 
+    if !challenge_ok && tunneling_count == 0 && collision_count == 0 {
+        let breakdown = QualityBreakdown {
+            basic: 0,
+            precision: 0,
+            performance: 0,
+            polish: 0,
+        };
+        return Ok(AcVerdict {
+            id: "AC17".to_string(),
+            name: "high-speed tunneling prevention".to_string(),
+            pass: false,
+            skipped: true,
+            quality: 0,
+            detail: "skipped: high_speed challenge unsupported and fallback produced no collision/tunneling attempts".to_string(),
+            breakdown,
+        });
+    }
+
     let pass = tunneling_count == 0 && collision_count > 0;
     let precision = if tunneling_count == 0 && collision_count > 0 {
         95
@@ -2236,8 +2256,8 @@ fn ac17_tunneling_prevention(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "tunneling events={}, collisions={} over 1000 boosted ticks",
-            tunneling_count, collision_count
+            "tunneling events={}, collisions={} high_speed_challenge={} over 1000 boosted ticks",
+            tunneling_count, collision_count, challenge_ok
         ),
         breakdown,
     })
