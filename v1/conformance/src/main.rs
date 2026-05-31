@@ -2529,7 +2529,7 @@ fn ac23_input_responsiveness(harness: &Harness) -> CheckResult {
         .fold(f64::NEG_INFINITY, f64::max)
         / 1_000_000.0;
 
-    let pass = avg_ms < 50.0 && responses_detected > 80;
+    let pass = avg_ms < 50.0 && max_ms < 100.0 && responses_detected > 80;
 
     let precision = if avg_ms < 10.0 {
         95
@@ -2578,6 +2578,7 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
 
     let mut near_misses = 0u32;
     let mut total_crashes = 0u32;
+    let mut unfair_collisions = 0u32;
     let mut near_margin_passes = 0u32;
 
     for _ in 0..2000 {
@@ -2604,12 +2605,32 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
 
         if next.skier.mode == "crashed" {
             total_crashes += 1;
+            let nearest = next
+                .obstacles
+                .iter()
+                .filter(|obs| CRASH_OBSTACLES.contains(&obs.kind.as_str()))
+                .min_by(|a, b| {
+                    point_distance(next.skier.x, next.skier.y, a.x, a.y)
+                        .partial_cmp(&point_distance(next.skier.x, next.skier.y, b.x, b.y))
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+            if let Some(obs) = nearest {
+                let actual_distance = point_distance(next.skier.x, next.skier.y, obs.x, obs.y);
+                let obs_half_width = obs.width.unwrap_or(1.5) / 2.0;
+                if actual_distance > obs_half_width + 0.2 {
+                    unfair_collisions += 1;
+                }
+            } else {
+                // A crash with no nearby crashable obstacle is also unfair.
+                unfair_collisions += 1;
+            }
         }
     }
 
     // Pass if near-miss events are reported OR if we observed near-margin passes
     let has_near_miss_detection = near_misses > 0 || near_margin_passes > 5;
-    let pass = has_near_miss_detection;
+    let unfair_collision_rate = unfair_collisions as f64 / 2000.0;
+    let pass = has_near_miss_detection && unfair_collision_rate < 0.01;
 
     let precision = if near_misses > 20 {
         95
@@ -2635,8 +2656,12 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "near_miss_events={}, near_margin_passes={}, crashes={}",
-            near_misses, near_margin_passes, total_crashes
+            "near_miss_events={}, near_margin_passes={}, crashes={}, unfair_collisions={} ({:.2}%)",
+            near_misses,
+            near_margin_passes,
+            total_crashes,
+            unfair_collisions,
+            unfair_collision_rate * 100.0
         ),
         breakdown,
     })
@@ -2661,10 +2686,10 @@ fn ac25_animation_smoothness(harness: &Harness) -> CheckResult {
     let avg_ns = frame_times_ns.iter().sum::<f64>() / n;
     let avg_ms = avg_ns / 1_000_000.0;
 
-    // Variance in frame times (jitter)
-    let ft_variance = frame_times_ns
+    // Variance in frame times (jitter), expressed in milliseconds squared.
+    let ft_variance_ms2 = frame_times_ns
         .iter()
-        .map(|t| (t - avg_ns).powi(2))
+        .map(|t| ((t - avg_ns) / 1_000_000.0).powi(2))
         .sum::<f64>()
         / n;
 
@@ -2683,11 +2708,11 @@ fn ac25_animation_smoothness(harness: &Harness) -> CheckResult {
         1.0
     };
 
-    let pass = avg_ms < 16.6 && dropped_frames < 10;
+    let pass = avg_ms < 16.6 && ft_variance_ms2 < 4.0 && dropped_frames < 10;
 
-    let precision = if ft_variance < 1e12 {
+    let precision = if ft_variance_ms2 < 1.0 {
         95
-    } else if ft_variance < 1e14 {
+    } else if ft_variance_ms2 < 4.0 {
         80
     } else {
         60
@@ -2725,8 +2750,8 @@ fn ac25_animation_smoothness(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms variance={:.2e} dropped={} accel_var={:.4}",
-            avg_ms, ft_variance, dropped_frames, accel_variance
+            "avg={:.2}ms variance_ms2={:.2} dropped={} accel_var={:.4}",
+            avg_ms, ft_variance_ms2, dropped_frames, accel_variance
         ),
         breakdown,
     })
