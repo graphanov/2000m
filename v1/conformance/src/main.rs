@@ -3145,7 +3145,6 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
                 .get(p99_idx.min(sorted_reported.len().saturating_sub(1)))
                 .copied();
         }
-        reported_profile_ticks.get_or_insert(reported_tick_nanos_samples.len() as u64);
     }
 
     let n = frame_times_ns.len() as f64;
@@ -3186,7 +3185,9 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     // External wall-clock sampling is retained as a diagnostic probe only. The
     // ranked AC pass uses deterministic driver-reported profile telemetry so the
     // conformance result is not tied to the host machine running the scorer.
-    let reported_perf_ok = matches!(reported_avg_ns, Some(ns) if ns < 16_600_000)
+    let reported_full_window_ok = matches!(reported_profile_ticks, Some(ticks) if ticks >= 1000);
+    let reported_perf_ok = reported_full_window_ok
+        && matches!(reported_avg_ns, Some(ns) if ns < 16_600_000)
         && matches!(reported_p99_ns, Some(ns) if ns < 20_000_000);
     let pass = max_obstacles >= 50 && allocations_ok && memory_ok && reported_perf_ok;
 
@@ -3232,10 +3233,11 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "reported_avg_ns={:?} reported_p99_ns={:?} reported_profile_ticks={:?} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
+            "reported_avg_ns={:?} reported_p99_ns={:?} reported_profile_ticks={:?} reported_full_window={} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
             reported_avg_ns,
             reported_p99_ns,
             reported_profile_ticks,
+            reported_full_window_ok,
             avg_ms,
             p99_ms,
             max_obstacles,
