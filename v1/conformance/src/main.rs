@@ -645,6 +645,86 @@ fn obstacle_crossed_skier_path(previous: &GameState, next: &GameState, obs: &Obs
     )
 }
 
+fn is_source_file(path: &Path) -> bool {
+    matches!(
+        path.extension().and_then(|ext| ext.to_str()),
+        Some(
+            "rs" | "js"
+                | "jsx"
+                | "ts"
+                | "tsx"
+                | "py"
+                | "lua"
+                | "go"
+                | "java"
+                | "c"
+                | "cc"
+                | "cpp"
+                | "h"
+                | "hpp"
+                | "cs"
+                | "swift"
+                | "kt"
+                | "kts"
+                | "html"
+                | "css"
+        )
+    )
+}
+
+fn count_source_loc(root: &Path) -> usize {
+    fn visit(path: &Path, total: &mut usize) {
+        let Ok(entries) = fs::read_dir(path) else {
+            return;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if path.is_dir() {
+                if matches!(
+                    name,
+                    ".git" | "target" | "node_modules" | "dist" | "build" | ".next" | "vendor"
+                ) {
+                    continue;
+                }
+                visit(&path, total);
+            } else if is_source_file(&path) {
+                if let Ok(content) = fs::read_to_string(&path) {
+                    *total += content
+                        .lines()
+                        .filter(|line| {
+                            let trimmed = line.trim();
+                            !trimmed.is_empty()
+                                && !trimmed.starts_with("//")
+                                && !trimmed.starts_with('#')
+                        })
+                        .count();
+                }
+            }
+        }
+    }
+
+    let mut total = 0usize;
+    visit(root, &mut total);
+    total
+}
+
+fn measure_average_frame_ms(harness: &Harness) -> Option<f64> {
+    let mut client = DriverClient::spawn(harness).ok()?;
+    init(&mut client, 2701, None).ok()?;
+
+    let mut total_ns = 0.0;
+    let samples = 120usize;
+    for _ in 0..samples {
+        let before = Instant::now();
+        step(&mut client, 0, false, false).ok()?;
+        total_ns += before.elapsed().as_nanos() as f64;
+    }
+
+    Some((total_ns / samples as f64) / 1_000_000.0)
+}
+
 fn validate_state(s: &GameState) -> Result<(), BoxError> {
     if !s.skier.x.is_finite()
         || !s.skier.y.is_finite()
@@ -1052,14 +1132,11 @@ fn run_suite(harness: &Harness) -> SuiteResult {
         pass_count as f64 / scored_count as f64
     };
 
-    let efficiency_avg = if scored_count == 0 {
-        0.0
-    } else {
-        acs.iter()
-            .filter(|ac| !ac.skipped)
-            .map(|ac| ac.breakdown.performance as f64)
-            .sum::<f64>()
-            / scored_count as f64
+    let source_loc = count_source_loc(&harness.game_dir);
+    let average_frame_ms = measure_average_frame_ms(harness);
+    let efficiency_avg = match (source_loc, average_frame_ms) {
+        (loc, Some(ms)) if loc > 0 && ms > 0.0 => (1000.0 / (loc as f64 * ms)).min(100.0),
+        _ => 0.0,
     };
 
     // Composite: pass rate (40%) + quality (30%) + efficiency (20%)
