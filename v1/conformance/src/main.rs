@@ -3105,11 +3105,12 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         match profile(&mut client, Some(1000)) {
             Ok(pm) => {
                 profile_samples += 1;
+                let full_window_profile = pm.window_ticks >= 1000;
                 reported_profile_ticks = Some(pm.window_ticks);
-                if pm.avg_tick_nanos >= 0 {
+                if full_window_profile && pm.avg_tick_nanos >= 0 {
                     reported_avg_ns = Some(pm.avg_tick_nanos);
                 }
-                if pm.p99_tick_nanos >= 0 {
+                if full_window_profile && pm.p99_tick_nanos >= 0 {
                     reported_p99_ns = Some(pm.p99_tick_nanos);
                 }
                 if pm.total_allocations >= 0 {
