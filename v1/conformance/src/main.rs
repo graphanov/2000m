@@ -362,6 +362,9 @@ impl DriverClient {
 
         let response: Value = serde_json::from_str(&response_line)
             .map_err(|err| format!("driver emitted invalid JSON: {}", err))?;
+        if response.get("ok").and_then(Value::as_bool) != Some(true) {
+            return Err(format!("driver returned non-ok response: {}", response_line).into());
+        }
         Ok(response)
     }
 
