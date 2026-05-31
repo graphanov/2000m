@@ -3034,6 +3034,8 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let mut memory_unavailable = false;
     let mut reported_avg_ns: Option<i64> = None;
     let mut reported_p99_ns: Option<i64> = None;
+    let mut reported_profile_ticks: Option<u64> = None;
+    let mut reported_tick_nanos_samples: Vec<i64> = Vec::new();
 
     for _ in 0..1000 {
         let before = Instant::now();
@@ -3064,11 +3066,18 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
             match profile(&mut client, Some(1)) {
                 Ok(pm) => {
                     profile_samples += 1;
+                    let mut sample_ns = None;
                     if pm.avg_tick_nanos >= 0 {
-                        reported_avg_ns = Some(pm.avg_tick_nanos);
+                        sample_ns = Some(pm.avg_tick_nanos);
                     }
                     if pm.p99_tick_nanos >= 0 {
-                        reported_p99_ns = Some(pm.p99_tick_nanos);
+                        sample_ns = Some(
+                            sample_ns
+                                .map_or(pm.p99_tick_nanos, |ns: i64| ns.max(pm.p99_tick_nanos)),
+                        );
+                    }
+                    if let Some(ns) = sample_ns {
+                        reported_tick_nanos_samples.push(ns);
                     }
                     if pm.total_allocations >= 0 {
                         allocations_available = true;
@@ -3090,6 +3099,52 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
                 }
             }
         }
+    }
+
+    if profile_supported {
+        match profile(&mut client, Some(1000)) {
+            Ok(pm) => {
+                profile_samples += 1;
+                reported_profile_ticks = Some(pm.window_ticks);
+                if pm.avg_tick_nanos >= 0 {
+                    reported_avg_ns = Some(pm.avg_tick_nanos);
+                }
+                if pm.p99_tick_nanos >= 0 {
+                    reported_p99_ns = Some(pm.p99_tick_nanos);
+                }
+                if pm.total_allocations >= 0 {
+                    allocations_available = true;
+                    total_allocations += pm.total_allocations;
+                }
+                if pm.peak_memory_bytes >= 0 {
+                    memory_available = true;
+                    peak_memory = peak_memory.max(pm.peak_memory_bytes);
+                }
+            }
+            Err(_) => {
+                allocations_unavailable = true;
+                memory_unavailable = true;
+            }
+        }
+    }
+
+    if !reported_tick_nanos_samples.is_empty()
+        && (reported_avg_ns.is_none() || reported_p99_ns.is_none())
+    {
+        let sample_count = reported_tick_nanos_samples.len() as i64;
+        if reported_avg_ns.is_none() {
+            let sum: i64 = reported_tick_nanos_samples.iter().sum();
+            reported_avg_ns = Some(sum / sample_count);
+        }
+        if reported_p99_ns.is_none() {
+            let mut sorted_reported = reported_tick_nanos_samples.clone();
+            sorted_reported.sort_unstable();
+            let p99_idx = ((sorted_reported.len() as f64) * 0.99) as usize;
+            reported_p99_ns = sorted_reported
+                .get(p99_idx.min(sorted_reported.len().saturating_sub(1)))
+                .copied();
+        }
+        reported_profile_ticks.get_or_insert(reported_tick_nanos_samples.len() as u64);
     }
 
     let n = frame_times_ns.len() as f64;
@@ -3176,9 +3231,10 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "reported_avg_ns={:?} reported_p99_ns={:?} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
+            "reported_avg_ns={:?} reported_p99_ns={:?} reported_profile_ticks={:?} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
             reported_avg_ns,
             reported_p99_ns,
+            reported_profile_ticks,
             avg_ms,
             p99_ms,
             max_obstacles,
