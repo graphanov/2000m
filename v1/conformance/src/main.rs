@@ -500,6 +500,36 @@ fn steer_toward_obstacle(state: &GameState, types: &[&str]) -> i64 {
     }
 }
 
+fn steer_near_obstacle_margin(state: &GameState, types: &[&str]) -> i64 {
+    let target = state
+        .obstacles
+        .iter()
+        .filter(|o| types.contains(&o.kind.as_str()) && o.y >= state.skier.y)
+        .min_by(|a, b| {
+            (a.y - state.skier.y)
+                .partial_cmp(&(b.y - state.skier.y))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+    match target {
+        Some(o) => {
+            let half_width = o.width.unwrap_or(1.5) / 2.0;
+            let clearance = half_width + 0.5;
+            let side = if state.skier.x <= o.x { -1.0 } else { 1.0 };
+            let target_x = o.x + side * clearance;
+            let dx = target_x - state.skier.x;
+            if dx > 0.25 {
+                1
+            } else if dx < -0.25 {
+                -1
+            } else {
+                0
+            }
+        }
+        None => 0,
+    }
+}
+
 fn steer_away_from_obstacle(state: &GameState) -> i64 {
     let threat = state
         .obstacles
@@ -2646,8 +2676,8 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
 
     for _ in 0..2000 {
         let s = state(&mut client)?.state;
-        // Steer close to obstacles but try to barely avoid
-        let steer = steer_toward_obstacle(&s, &CRASH_OBSTACLES);
+        // Steer to a close non-colliding margin around obstacles.
+        let steer = steer_near_obstacle_margin(&s, &CRASH_OBSTACLES);
         let next = step(&mut client, steer, false, false)?.state;
 
         let reported_near_miss = next.events.iter().any(|e| e == "near_miss");
