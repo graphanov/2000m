@@ -2853,12 +2853,15 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
     init(&mut client, 27, None)?;
 
-    // Try dense field challenge
-    let _ = challenge(&mut client, "dense_field", &json!({"obstacleCount": 100}));
+    // Try dense field challenge. If unsupported and normal fallback cannot
+    // create dense conditions, this AC is untestable and should be skipped.
+    let dense_challenge_ok =
+        challenge(&mut client, "dense_field", &json!({"obstacleCount": 100})).is_ok();
 
     let mut frame_times_ns: Vec<f64> = Vec::new();
     let mut total_allocations: i64 = 0;
     let mut peak_memory: i64 = 0;
+    let mut max_obstacles = 0usize;
     let mut has_quality = false;
     let mut profile_supported = true;
     let mut profile_samples = 0usize;
@@ -2872,6 +2875,7 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         let p = step(&mut client, 0, false, false)?;
         let elapsed = before.elapsed().as_nanos() as f64;
         frame_times_ns.push(elapsed);
+        max_obstacles = max_obstacles.max(p.state.obstacles.len());
 
         if let Some(q) = &p.state.quality {
             has_quality = true;
@@ -2921,8 +2925,30 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let p99_idx = (n * 0.99) as usize;
     let p99_ms = sorted.get(p99_idx).copied().unwrap_or(0.0) / 1_000_000.0;
 
+    if !dense_challenge_ok && max_obstacles < 50 {
+        let breakdown = QualityBreakdown {
+            basic: 0,
+            precision: 0,
+            performance: 0,
+            polish: 0,
+        };
+        return Ok(AcVerdict {
+            id: "AC27".to_string(),
+            name: "performance budget".to_string(),
+            pass: false,
+            skipped: true,
+            quality: 0,
+            detail: format!(
+                "skipped: dense_field challenge unsupported and fallback reached only {} visible obstacles",
+                max_obstacles
+            ),
+            breakdown,
+        });
+    }
+
     let pass = avg_ms < 16.6
         && p99_ms < 20.0
+        && max_obstacles >= 50
         && allocations_available
         && !allocations_unavailable
         && total_allocations == 0
@@ -2973,9 +2999,11 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms p99={:.2}ms allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
+            "avg={:.2}ms p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
             avg_ms,
             p99_ms,
+            max_obstacles,
+            dense_challenge_ok,
             total_allocations,
             peak_memory / 1_000_000,
             has_quality,
