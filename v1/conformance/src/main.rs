@@ -3257,6 +3257,7 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
     let mut landing_events = 0u32;
     let mut crash_events = 0u32;
     let mut near_miss_events = 0u32;
+    let mut color_grading_events = 0u32;
     let mut total_events_seen = 0u32;
     let mut event_types_seen: Vec<String> = Vec::new();
 
@@ -3276,12 +3277,13 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
             }
             total_events_seen += 1;
             match event.as_str() {
-                e if e.contains("particle") => particle_events += 1,
-                e if e.contains("shake") => shake_events += 1,
-                e if e.contains("style") => style_events += 1,
+                "particle_spawn" => particle_events += 1,
+                "screen_shake" => shake_events += 1,
+                "style_gain" | "style_loss" => style_events += 1,
                 "landing" => landing_events += 1,
                 "crash" | "collision" => crash_events += 1,
                 "near_miss" => near_miss_events += 1,
+                "color_grading_active" => color_grading_events += 1,
                 _ => {}
             }
         }
@@ -3289,7 +3291,8 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
 
     let total_event_types = event_types_seen.len();
     let has_rich_events = total_event_types >= 4;
-    let visual_feedback_events = particle_events + shake_events + style_events + near_miss_events;
+    let visual_feedback_events =
+        particle_events + shake_events + style_events + near_miss_events + color_grading_events;
     let pass = particle_events > 0 && shake_events > 0 && visual_feedback_events >= 3;
 
     let precision = if total_event_types >= 6 {
@@ -3328,7 +3331,7 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "event_types={} total_events={} visual_feedback_events={} [particles={}, shake={}, style={}, landing={}, crash={}, near_miss={}] types={:?}",
+            "event_types={} total_events={} visual_feedback_events={} [particles={}, shake={}, style={}, landing={}, crash={}, near_miss={}, color_grading={}] types={:?}",
             total_event_types,
             total_events_seen,
             visual_feedback_events,
@@ -3338,6 +3341,7 @@ fn ac28_visual_polish(harness: &Harness) -> CheckResult {
             landing_events,
             crash_events,
             near_miss_events,
+            color_grading_events,
             event_types_seen
         ),
         breakdown,
