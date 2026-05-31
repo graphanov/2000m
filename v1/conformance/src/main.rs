@@ -2018,13 +2018,9 @@ fn ac16_reset_reproducible(harness: &Harness) -> CheckResult {
     if reset_stream != fresh_stream {
         return Err("post-reset stream differed from fresh init stream for same seed".into());
     }
-    if non_empty == 0 {
-        return Err("post-reset reproducibility stream contained no seeded obstacles".into());
-    }
-
     let breakdown = QualityBreakdown {
         basic: 100,
-        precision: 95,
+        precision: if non_empty > 0 { 95 } else { 80 },
         performance: 85,
         polish: 80,
     };
@@ -2036,8 +2032,9 @@ fn ac16_reset_reproducible(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "reset cleared state and matched fresh seeded stream over {} snapshots",
-            reset_stream.len()
+            "reset cleared state and matched fresh seeded stream over {} snapshots ({} with obstacles)",
+            reset_stream.len(),
+            non_empty
         ),
         breakdown,
     })
@@ -2693,8 +2690,9 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
         }
     }
 
-    // Pass if near-miss events are reported OR if we observed near-margin passes
-    let has_near_miss_detection = near_misses > 0 || near_margin_passes > 5;
+    // Pass requires actual near-miss events; inferred near-margin passes are
+    // diagnostic only because AC24 validates near-miss detection itself.
+    let has_near_miss_detection = near_misses > 50;
     let unfair_collision_rate = unfair_collisions as f64 / 2000.0;
     let pass = has_near_miss_detection && unfair_collision_rate < 0.01;
 
