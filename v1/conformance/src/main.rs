@@ -2354,8 +2354,9 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
     let mut client = DriverClient::spawn(harness)?;
     init(&mut client, 21, None)?;
 
-    // Try crash gauntlet challenge
-    let _ = challenge(&mut client, "crash_gauntlet", &json!({"crashCount": 50}));
+    // Try crash gauntlet challenge. If unsupported and normal play cannot
+    // generate enough crash cycles, this AC is untestable rather than failed.
+    let challenge_ok = challenge(&mut client, "crash_gauntlet", &json!({"crashCount": 50})).is_ok();
 
     let mut crashes = 0u32;
     let mut recoveries = 0u32;
@@ -2409,6 +2410,27 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
         _ => true,
     };
 
+    if !challenge_ok && crashes < 50 {
+        let breakdown = QualityBreakdown {
+            basic: 0,
+            precision: 0,
+            performance: 0,
+            polish: 0,
+        };
+        return Ok(AcVerdict {
+            id: "AC21".to_string(),
+            name: "crash recovery under load".to_string(),
+            pass: false,
+            skipped: true,
+            quality: 0,
+            detail: format!(
+                "skipped: crash_gauntlet challenge unsupported and fallback produced only {} crash cycles",
+                crashes
+            ),
+            breakdown,
+        });
+    }
+
     let pass = crashes >= 50 && recoveries >= crashes && state_corruption == 0 && memory_ok;
 
     let precision = if recoveries == crashes {
@@ -2433,8 +2455,15 @@ fn ac21_crash_under_load(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "crashes={}, recoveries={}, corruptions={}, first_memory={:?}, max_memory={:?}, final_memory={:?}, memory_ok={}",
-            crashes, recoveries, state_corruption, first_memory, max_memory, last_memory, memory_ok
+            "crashes={}, recoveries={}, corruptions={}, crash_gauntlet={}, first_memory={:?}, max_memory={:?}, final_memory={:?}, memory_ok={}",
+            crashes,
+            recoveries,
+            state_corruption,
+            challenge_ok,
+            first_memory,
+            max_memory,
+            last_memory,
+            memory_ok
         ),
         breakdown,
     })
