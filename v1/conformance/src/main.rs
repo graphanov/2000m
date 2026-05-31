@@ -1046,7 +1046,10 @@ fn run_suite(harness: &Harness) -> SuiteResult {
     let quality_avg = if total == 0 {
         0.0
     } else {
-        acs.iter().map(|ac| ac.quality as f64).sum::<f64>() / total as f64
+        acs.iter()
+            .map(|ac| if ac.skipped { 0.0 } else { ac.quality as f64 })
+            .sum::<f64>()
+            / total as f64
     };
 
     let pass_rate = if total == 0 {
@@ -1055,11 +1058,12 @@ fn run_suite(harness: &Harness) -> SuiteResult {
         pass_count as f64 / total as f64
     };
 
-    // Standalone v1 composite is machine-reproducible: no external wall-clock,
-    // LOC, OS state, or trajectory/convergence bonus. Multi-generation result
-    // repositories may layer separate trajectory fields on top, but this neutral
-    // scorer only blends deterministic AC pass rate and per-AC quality over all
-    // 28 ACs.
+    // Standalone v1 composite has no separate LOC, OS-state, external timing,
+    // efficiency, or trajectory/convergence term. Multi-generation result
+    // repositories may layer separate trajectory fields on top. AC-level
+    // pass/quality can still be based on labeled host-bound probes or
+    // driver-reported telemetry, so result evidence must keep those sources
+    // explicit.
     let composite_score = pass_rate * 70.0 + quality_avg * 0.3;
 
     SuiteResult {
@@ -2262,7 +2266,7 @@ fn ac18_dense_field_performance(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms p95={:.2}ms p99={:.2}ms max_obstacles={} challenge={}",
+            "timing_source=host_wall_clock avg={:.2}ms p95={:.2}ms p99={:.2}ms max_obstacles={} challenge={}",
             avg_ms, p95_ms, p99_ms, max_obstacles, challenge_ok
         ),
         breakdown,
@@ -2697,7 +2701,7 @@ fn ac23_input_responsiveness(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms max={:.2}ms responses={}/100",
+            "timing_source=host_wall_clock avg={:.2}ms max={:.2}ms responses={}/100",
             avg_ms, max_ms, responses_detected
         ),
         breakdown,
@@ -2888,7 +2892,7 @@ fn ac25_animation_smoothness(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms variance_ms2={:.2} dropped={} accel_var={:.4}",
+            "timing_source=host_wall_clock avg={:.2}ms variance_ms2={:.2} dropped={} accel_var={:.4}",
             avg_ms, ft_variance_ms2, dropped_frames, accel_variance
         ),
         breakdown,
@@ -3182,9 +3186,11 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let allocations_ok = !allocations_available || total_allocations == 0;
     let memory_ok = !memory_available || (peak_memory > 0 && peak_memory < 50_000_000);
 
-    // External wall-clock sampling is retained as a diagnostic probe only. The
-    // ranked AC pass uses deterministic driver-reported profile telemetry so the
-    // conformance result is not tied to the host machine running the scorer.
+    // External wall-clock sampling is not the ranked AC27 pass gate. The pass
+    // gate uses full-window driver-reported profile telemetry so the conformance
+    // result is not tied to the scorer host. The external probe may still feed
+    // the labeled quality breakdown/composite as host-bound diagnostic evidence.
+    // Driver timing values are self-reported and must be labeled as such.
     let reported_full_window_ok = matches!(reported_profile_ticks, Some(ticks) if ticks >= 1000);
     let reported_perf_ok = reported_full_window_ok
         && matches!(reported_avg_ns, Some(ns) if ns < 16_600_000)
@@ -3233,7 +3239,7 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         skipped: false,
         quality: breakdown.composite(),
         detail: format!(
-            "reported_avg_ns={:?} reported_p99_ns={:?} reported_profile_ticks={:?} reported_full_window={} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
+            "ranked_timing_source=driver_reported_profile diagnostic_timing_source=host_wall_clock reported_avg_ns={:?} reported_p99_ns={:?} reported_profile_ticks={:?} reported_full_window={} external_probe_avg={:.2}ms external_probe_p99={:.2}ms max_obstacles={} dense_challenge={} allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
             reported_avg_ns,
             reported_p99_ns,
             reported_profile_ticks,

@@ -30,11 +30,15 @@ through 2000m monster behavior.
 
 The v1 course, under [`v1/`](v1/), expands the climb to **28 ACs** across core
 mechanics, challenge depth, polish, and optimization. It adds quality scoring so
-"barely passes" and "feels sharp" no longer collapse into the same row.
+"barely passes" and stronger implementations can be reported with more nuance,
+but each v1 result must keep measured, host-bound, driver-reported, and
+probe-only signals clearly labeled.
 
-One protocol `step` is one deterministic logic tick. The score does not use
-wall-clock timing, manual play, networking, random OS state, or visual taste.
-
+One protocol `step` is one deterministic logic tick. The stable scorecard keeps
+manual play, networking, random OS state, and human visual taste out of
+mechanical rank. v1 currently contains some host wall-clock timing probes and
+full-window driver-reported performance telemetry; those fields are evidence
+sources to label, not portable independent performance proof.
 A produced game can be charming; the rank still comes from reproducible protocol
 checks.
 
@@ -46,8 +50,10 @@ Keep these limits in view:
 - This repo is the harness/judge, not a finished game, game solution, or
   reference game.
 - Human feel is **operator taste, not score**; it never changes mechanical rank.
-- Visual taste, wall-clock behavior, manual play, network access, and random OS
-  state are not scored.
+- Host wall-clock timing, driver-reported performance telemetry, and visual
+  event strings may appear in v1 evidence only when explicitly labeled by
+  source; they are not portable independent proof by themselves.
+- Manual play, network access, and random OS state are not scored.
 - No copyrighted SkiFree binaries, sprites, sounds, extracted assets, or replica
   visuals belong in this repo or produced-game submissions.
 - Produced games should use original homage assets only.

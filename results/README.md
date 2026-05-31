@@ -23,4 +23,6 @@ Required row fields for the current v0-style table:
 - `evidence`: path to the final conformance JSON or release evidence note.
 
 For v1 runs, keep the row explicitly track-labeled and include quality/composite
-fields in evidence until the rendered leaderboard schema is expanded.
+fields in evidence until the rendered leaderboard schema is expanded. Evidence
+for v1 timing or polish fields must label whether each field is suite-recomputed,
+host-bound, driver-reported, probe-only, or a constant rubric default.
