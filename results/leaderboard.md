@@ -1,7 +1,9 @@
 # 2000m Leaderboard
 
-Mechanical columns determine rank. The human-feel column is explicitly **operator taste, not
-score**, and is never blended into the mechanical rank.
+This is the rendered scoreboard for the 2000m judge. Mechanical columns determine
+rank from the track-labeled AC-pass trajectory; the human-feel column is
+explicitly **operator taste, not score**, and is never blended into the
+mechanical rank.
 
 | Mechanical rank | Model | Produced repo | AC trajectory | Final ACs | Gen-to-playable (AC1–AC8) | Gen-to-yeti (AC12–AC14) | Monotonic | Human feel (operator taste, not score) | Evidence |
 |---:|---|---|---:|---:|---:|---:|:---:|---|---|
