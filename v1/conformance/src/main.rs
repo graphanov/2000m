@@ -2650,10 +2650,8 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
         let steer = steer_toward_obstacle(&s, &CRASH_OBSTACLES);
         let next = step(&mut client, steer, false, false)?.state;
 
-        // Check for near_miss event
-        if next.events.iter().any(|e| e == "near_miss") {
-            near_misses += 1;
-        }
+        let reported_near_miss = next.events.iter().any(|e| e == "near_miss");
+        let mut near_margin_this_tick = false;
 
         // Track near-margin passes (skier passed very close without crashing)
         for obs in &s.obstacles {
@@ -2661,9 +2659,16 @@ fn ac24_collision_forgiveness(harness: &Harness) -> CheckResult {
                 let margin = (next.skier.x - obs.x).abs();
                 let obs_half_width = obs.width.unwrap_or(1.5) / 2.0;
                 if margin > obs_half_width && margin < obs_half_width + 1.0 {
+                    near_margin_this_tick = true;
                     near_margin_passes += 1;
                 }
             }
+        }
+
+        // Count near_miss events only when the reported event is geometrically
+        // supported by an actual near-margin pass on this tick.
+        if reported_near_miss && near_margin_this_tick {
+            near_misses += 1;
         }
 
         if next.skier.mode == "crashed" {
