@@ -540,7 +540,7 @@ assert collisions > 0;  // collisions detected
 
 ---
 
-### AC18: Dense Obstacle Field Performance
+### AC18: Dense Obstacle Field Host-Timing Probe
 
 **Test procedure**:
 ```rust
@@ -550,10 +550,10 @@ challenge("dense_field", {"obstacleCount": 100});
 let mut frame_times = vec![];
 for _ in 0..500 {
     let before = now();
-    let s = step(steer=random()).state;
+    let s = step(steer=0).state;
     let frame_time = now() - before;
     frame_times.push(frame_time);
-    
+
     // Verify all mechanics still work
     assert s.obstacles.len() > 50;  // many obstacles visible
 }
@@ -562,18 +562,20 @@ let avg = frame_times.mean();
 let p95 = frame_times.percentile(95);
 let p99 = frame_times.percentile(99);
 
-assert avg < 16.6ms;  // 60fps
+assert avg < 16.6ms;
 assert p95 < 20ms;
 assert p99 < 30ms;
 ```
 
-**Pass condition**: Maintain 60fps (16.6ms frame budget) with 100 obstacles
+**Pass condition**: Host-wall-clock dense-field `step` probe stays within the 60fps-style budget and shows at least 50 visible obstacles.
+
+**Evidence source**: host-bound scorer timing around driver `step` calls. This includes JSON serialization, subprocess scheduling, and IPC overhead. It is useful as a local stress probe, but it is not portable independent performance proof unless the run uses a documented canonical host.
 
 **Quality rubric**:
-- `basic` (100): 60fps maintained
-- `precision` (90): Spatial partitioning (quadtree, grid)
-- `performance` (95): Culling (only update visible obstacles), object pooling
-- `polish` (85): Profiling data included, optimization notes
+- `basic` (100): Host probe stays under budget with dense field visible
+- `precision` (90): Dense-field challenge supported and visible obstacle count is high
+- `performance` (95/85/70/30): Derived from host probe timing bucket
+- `polish` (85/60): Driver quality telemetry present or absent
 
 **Expected quality**: 60-85
 
@@ -581,6 +583,7 @@ assert p99 < 30ms;
 - O(n²) collision detection
 - No spatial partitioning
 - Heap allocations per frame
+- Slow scorer host or IPC overhead causing non-portable failures
 
 ---
 
@@ -793,26 +796,25 @@ assert transition_smooth;  // no pop-in
 
 ## Tier 3: Polish and Optimization (AC23-AC28)
 
-### AC23: Input Responsiveness
+### AC23: Input Responsiveness Host-Timing Probe
 
 **Test procedure**:
 ```rust
 init(seed=23);
 
-// Measure latency from keypress to visual response
 let mut latencies = vec![];
+let mut responses_detected = 0;
 for _ in 0..100 {
-    let before_input = now();
     let s_before = state();
-    
+    let before_input = now();
+
     let s_after = step(steer=1).state;
     let after_response = now();
-    
+
     let latency = after_response - before_input;
-    let response_detected = s_after.skier.x != s_before.skier.x;
-    
-    if response_detected {
-        latencies.push(latency);
+    latencies.push(latency);
+    if s_after.skier.x != s_before.skier.x {
+        responses_detected += 1;
     }
 }
 
@@ -821,36 +823,25 @@ let max_latency = latencies.max();
 
 assert avg_latency < 50ms;
 assert max_latency < 100ms;
-
-// Check for input buffering
-let mut buffered_inputs = 0;
-for _ in 0..10 {
-    // Send input during "animation lock" (crashed state)
-    init(seed=23);
-    // ... crash skier ...
-    let s = step(steer=1).state;  // input during crash
-    if s.events.contains("input_buffered") {
-        buffered_inputs += 1;
-    }
-}
-
-assert buffered_inputs > 0;  // input buffering works
+assert responses_detected > 80;
 ```
 
-**Pass condition**: Latency < 50ms average, < 100ms max
+**Pass condition**: Host-wall-clock responsiveness probe reports average latency < 50ms, max latency < 100ms, and steering changes are observed in more than 80 of 100 samples.
+
+**Evidence source**: host-bound scorer timing around driver `state`/`step` calls. It is a local responsiveness probe, not portable renderer/input-stack proof.
 
 **Quality rubric**:
-- `basic` (100): Latency < 50ms
-- `precision` (90): Input buffering (queue during animation locks)
-- `performance` (85): Predictive rendering (anticipate input)
-- `polish` (80): Profiling data, latency breakdown by input type
+- `basic` (100): Host probe and response count pass
+- `precision` (95/85/70/40): Average host-probe latency bucket
+- `performance` (95/80/65/40): Max host-probe latency bucket
+- `polish` (70): Constant rubric default, not measured polish
 
 **Expected quality**: 70-90
 
 **Failure modes**:
-- Blocking I/O in main loop
-- No input buffering
-- VSync adding latency
+- Blocking I/O in main loop or driver process
+- Steering input does not produce state changes
+- Slow scorer host or IPC overhead causing non-portable failures
 
 ---
 
@@ -917,69 +908,49 @@ assert grace_frame_forgiveness > 0;
 
 ---
 
-### AC25: Animation Smoothness
+### AC25: Animation Smoothness Host-Timing Probe
 
 **Test procedure**:
 ```rust
 init(seed=25);
 
 let mut frame_times = vec![];
-let mut jitter_events = 0;
-let mut last_x = state().skier.x;
+let mut speeds = vec![];
 
 for _ in 0..1000 {
     let before = now();
     let s = step(steer=1).state;
     let frame_time = now() - before;
     frame_times.push(frame_time);
-    
-    // Check for jitter (sub-pixel rendering issues)
-    let dx = (s.skier.x - last_x).abs();
-    if dx < 0.01 && dx > 0.0 {  // sub-pixel movement
-        // Should use interpolation, not snap to pixel
-        // This is hard to detect without visual output, so we check frame time variance instead
-    }
-    
-    last_x = s.skier.x;
+    speeds.push(s.skier.speed);
 }
 
 let avg = frame_times.mean();
 let variance = frame_times.variance();
-let dropped_frames = frame_times.iter().filter(|t| *t > 33.3).count();  // > 2 frames
+let dropped_frames = frame_times.iter().filter(|t| *t > 33.3).count();
+let acceleration_variance = speeds.windows(2).map(|w| w[1] - w[0]).variance();
 
-assert avg < 16.6ms;           // 60fps
-assert variance < 4.0;         // low variance (no jitter)
-assert dropped_frames < 10;    // < 1% dropped frames
-
-// Check for easing functions
-let mut speed_changes = vec![];
-let mut last_speed = state().skier.speed;
-for _ in 0..100 {
-    let s = step(steer=0).state;
-    let acceleration = s.skier.speed - last_speed;
-    speed_changes.push(acceleration);
-    last_speed = s.skier.speed;
-}
-
-// Smooth acceleration = low variance in acceleration
-let acceleration_variance = speed_changes.variance();
-assert acceleration_variance < 0.1;  // smooth easing
+assert avg < 16.6ms;
+assert variance < 4.0;
+assert dropped_frames < 10;
 ```
 
-**Pass condition**: 60fps, low variance, no dropped frames
+**Pass condition**: Host-wall-clock animation probe stays under 16.6ms average, frame-time variance stays low, and dropped-frame count is below 10.
+
+**Evidence source**: host-bound scorer timing around driver `step` calls plus protocol-observed speed deltas. This is not visual renderer proof; it is a headless smoothness proxy.
 
 **Quality rubric**:
-- `basic` (100): 60fps, < 1% dropped frames
-- `precision` (90): Sub-pixel rendering (interpolation)
-- `performance` (85): Easing functions (smooth acceleration/deceleration)
-- `polish` (80): Motion blur on fast movement, frame pacing data
+- `basic` (100): Host timing probe passes
+- `precision` (95/80/60): Frame-time variance bucket
+- `performance` (95/85/70/40): Dropped-frame bucket
+- `polish` (90/75/55): Protocol-observed acceleration-variance bucket
 
 **Expected quality**: 70-90
 
 **Failure modes**:
-- VSync misalignment
-- No interpolation (pixel snapping)
-- Blocking operations in render loop
+- Slow scorer host or IPC overhead causing non-portable failures
+- No smooth acceleration curve in protocol state
+- Blocking operations in the driver loop
 
 ---
 
@@ -1034,45 +1005,45 @@ assert replay_bytes < 1000;  // < 1KB per 1000 ticks
 
 ---
 
-### AC27: Performance Budget
+### AC27: Driver-Reported Performance Budget
 
 **Test procedure**:
 ```rust
 init(seed=27);
 challenge("dense_field", {"obstacleCount": 100});
 
-let mut frame_times = vec![];
+let mut external_probe_times = vec![];
 let mut allocations = 0;
 let mut memory_samples = vec![];
 
 for _ in 0..1000 {
     let before = now();
-    let s = step(steer=random()).state;
-    let frame_time = now() - before;
-    frame_times.push(frame_time);
-    
+    let s = step(steer=0).state;
+    external_probe_times.push(now() - before);
+
     let profile = profile(window=1);
     allocations += profile.metrics.totalAllocations;
     memory_samples.push(profile.metrics.peakMemoryBytes);
 }
 
-let avg = frame_times.mean();
-let p99 = frame_times.percentile(99);
-let max_memory = memory_samples.max();
+let final_profile = profile(window=1000);
 
-assert avg < 16.6ms;              // 60fps
-assert p99 < 20ms;                // 99% < 20ms
-assert allocations == 0;          // no heap allocations
-assert max_memory < 50_000_000;   // < 50MB
+assert final_profile.metrics.windowTicks >= 1000;
+assert final_profile.metrics.avgTickNanos < 16_600_000;
+assert final_profile.metrics.p99TickNanos < 20_000_000;
+assert allocations == 0;
+assert memory_samples.max() < 50_000_000;
 ```
 
-**Pass condition**: 60fps, 99% < 20ms, zero allocations, < 50MB
+**Pass condition**: Dense-field run shows at least 50 visible obstacles, allocation/memory evidence is within budget when available, and the driver reports a full-window (`windowTicks >= 1000`) average and p99 tick budget under threshold.
+
+**Evidence source**: ranked pass uses driver-reported `profile` telemetry. The scorer also records an external host-wall-clock probe for diagnostics, but that probe is not the ranked AC27 pass gate. Driver-reported nanos are reproducible if honest, but they are not independently recomputed by the scorer.
 
 **Quality rubric**:
-- `basic` (100): 60fps, < 50MB
-- `precision` (90): Object pooling (no allocations)
-- `performance` (95): Parallel processing (rayon, SIMD)
-- `polish` (85): Memory profiling data, optimization notes
+- `basic` (100): Full-window driver-reported profile passes the budget
+- `precision` (100/80/50): Allocation evidence available and zero, or unavailable/partial
+- `performance` (95/85/70/40): External host-wall-clock p99 diagnostic bucket
+- `polish` (90/70/60/50): Memory/profile telemetry availability and budget
 
 **Expected quality**: 60-85
 
@@ -1080,104 +1051,101 @@ assert max_memory < 50_000_000;   // < 50MB
 - Heap allocations per frame
 - No object pooling
 - O(n²) algorithms
+- Driver reports a short profile window or omits timing fields
+- Driver-reported profile values are not independently verifiable
 
 ---
 
-### AC28: Visual Polish
+### AC28: Visual Polish Probe
 
 **Test procedure**:
 ```rust
 init(seed=28);
 
-// Check for particle effects
 let mut particle_events = 0;
-for _ in 0..100 {
-    let s = step(steer=0).state;
-    if s.events.contains("particle_spawn") {
-        particle_events += 1;
+let mut shake_events = 0;
+let mut style_events = 0;
+let mut landing_events = 0;
+let mut crash_events = 0;
+let mut near_miss_events = 0;
+let mut color_grading_events = 0;
+let mut total_events_seen = 0;
+let mut event_types_seen = set();
+
+for _ in 0..2000 {
+    let s = state();
+    let steer = if s.skier.mode == "crashed" {
+        0
+    } else {
+        steer_toward_obstacle(s, ["ramp"])
+    };
+    let next = step(steer=steer, boost=true).state;
+
+    for event in next.events {
+        event_types_seen.add(event);
+        total_events_seen += 1;
+        count particle, shake, style, landing, crash, near_miss, and color-grading events;
     }
 }
-assert particle_events > 10;  // particles spawn on events
 
-// Check for screen shake
-let mut shake_events = 0;
-// ... crash skier ...
-let s = state();
-if s.events.contains("screen_shake") {
-    shake_events += 1;
-}
-assert shake_events > 0;
-
-// Check for color grading
-let mut color_grading = false;
-// ... boost to high speed ...
-let s = state();
-if s.events.contains("color_grading_active") {
-    color_grading = true;
-}
-assert color_grading;
-
-// Check for accessibility features
-let mut colorblind_mode = false;
-let mut pause_on_focus_loss = false;
-// These require config or special commands, so we check if driver supports them
-// via the `challenge` command or similar
+// Current headless scorer records event richness as quality/context telemetry.
+// It does not mechanically pass AC28 from event strings alone.
+assert mechanical_pass == false;
 ```
 
-**Pass condition**: Particle effects, screen shake, visual feedback on major events
+**Pass condition**: Probe-only in the current headless scorer. Visual-polish event strings are collected as quality/context telemetry, but they do not create a mechanical pass by themselves.
+
+**Evidence source**: driver-reported event strings observed through the protocol. They may support qualitative comparison, but they are not renderer proof and not a mechanical visual-polish pass.
 
 **Quality rubric**:
-- `basic` (100): Particles, shake, feedback
-- `precision` (90): Color grading (speed lines, style meter)
-- `performance` (85): Particle system (pooling, culling)
-- `polish` (80): Accessibility (colorblind mode, pause on focus loss)
+- `basic` (30): Constant probe-only baseline; AC28 does not mechanically pass from event strings
+- `precision` (95/80/65/50/20): Number of distinct event types observed
+- `performance` (75): Constant rubric default, not measured renderer performance
+- `polish` (90/75/60/40): Particle/shake/rich-event telemetry buckets
 
-**Expected quality**: 50-75
+**Expected quality**: 30-75
 
 **Failure modes**:
-- No particle system
-- No screen shake
-- No accessibility features
+- No event telemetry
+- Event strings that do not correspond to real renderer polish
+- Treating spoofable headless events as mechanical visual proof
 
 ---
 
 ## Composite Scoring
 
+The canonical standalone v1 composite is implemented by the scorer in `v1/conformance/src/main.rs`:
+
 ```python
-def calculate_composite_score(acs, generations, loc, avg_frame_time):
-    # Pass rate (40%)
-    pass_rate = sum(ac.pass for ac in acs) / len(acs)
-    
-    # Quality score (30%)
-    quality_score = sum(ac.quality for ac in acs) / len(acs)
-    
-    # Efficiency (20%)
-    # Lower is better: lines of code × frame time
-    efficiency_raw = loc * avg_frame_time
-    efficiency = min(100, 10000 / efficiency_raw)  # normalize to 0-100
-    
-    # Convergence speed (10%)
-    # Fewer generations = better
-    convergence = max(0, 100 - (generations * 10))
-    
-    return (
-        pass_rate * 40 +
-        quality_score * 30 +
-        efficiency * 20 +
-        convergence * 10
-    )
+def calculate_composite_score(acs):
+    total = len(acs)
+
+    # Skipped/untestable ACs stay in the denominator.
+    pass_count = sum(1 for ac in acs if ac.pass and not ac.skipped)
+    pass_rate = pass_count / total
+
+    # Skipped ACs contribute quality=0.
+    quality_score = sum(ac.quality for ac in acs) / total
+
+    return pass_rate * 70.0 + quality_score * 0.3
 ```
 
-**Example**: 28/28 ACs, avg quality 85, 5000 LOC, 2ms frame time, 6 generations
+**Example**: 28/28 ACs with average quality 85
 
-```
-pass_rate = 1.0 → 40
+```text
+pass_rate = 1.0 → 70.0
 quality = 85 → 25.5
-efficiency = 10000 / (5000 × 2) = 1.0 → 20
-convergence = 100 - (6 × 10) = 40 → 4
 
-Total = 40 + 25.5 + 20 + 4 = 89.5
+Total = 70.0 + 25.5 = 95.5
 ```
+
+Boundary notes:
+
+- The standalone scorer does not include LOC.
+- The standalone scorer does not include host-level efficiency or average frame time as a separate formula term.
+- The standalone scorer does not include convergence speed or generation count.
+- Multi-generation result repositories may report trajectory, monotonicity, generations-to-playable, generation efficiency, or human-feel notes as separate fields. They are not part of `compositeScore` unless a future protocol version changes the scorer.
+- AC-level quality may itself include host-bound or driver-reported telemetry; result evidence must label those sources.
 
 ---
 

@@ -33,33 +33,43 @@ The conformance suite is the scorer. It drives the produced game only by
 spawning the manifest's subprocess driver and sending JSON-line protocol
 commands over stdin/stdout.
 
-## No hints (brutal mode)
+## No private shortcuts (brutal mode)
 
-The suite gives the produced game no setup hints, scenario flags, or shortcut
-keys. It sends an empty `config` on every `init` and reaches each mechanic the
-way a human would: it reads the seeded obstacle and monster coordinates the game
-itself reports and steers the skier into trees, onto ramps, and into the yeti by
-ordinary protocol input. Collisions, ramps, and monster contact must genuinely
-work — a produced game cannot pass a mechanic by special-casing a flag, because
-no such flag exists.
+The suite gives the produced game no private setup hints, shortcut keys, or
+model-specific flags. It sends an empty `config` on every `init`.
+
+For v0, the suite reaches each mechanic the way a human would: it reads the
+seeded obstacle and monster coordinates the game itself reports and steers the
+skier into trees, onto ramps, and into the yeti by ordinary protocol input.
+
+For v1, the public protocol also defines standardized `challenge` scenarios for
+stress/probe checks such as dense fields and high-speed tunneling. Those
+scenarios are benchmark inputs, not secret answer keys: a produced game still
+must expose real protocol state and cannot pass by special-casing private flags
+or undocumented setup paths.
 
 ## Mechanical score
 
-The ranked score is objective and reproducible per track:
+The ranked score is track-labeled and must state its evidence source:
 
 - seed-determinism must hold for the run to be trusted;
 - v0 checks AC1–AC16 mechanically through the driver protocol;
 - v1 checks AC1–AC28 and adds quality scoring across three tiers;
 - v1 skipped/untestable ACs count as zero in ranked composite denominators;
 - the primary v0 metric is the AC-pass trajectory across evolve generations;
-- v1 may additionally report quality/composite fields, but standalone ranked
-  composite must remain machine-reproducible and must not use host wall-clock,
-  random OS state, or self-attested visual polish as a mechanical pass;
+- the v1 standalone composite is the scorer output from AC pass rate plus
+  per-AC quality over all 28 ACs; it does not include LOC, convergence speed,
+  human feel, or external result-repo trajectory fields;
+- v1 currently includes explicitly labeled host-bound timing probes and
+  driver-reported profile telemetry, so timing fields must not be described as
+  portable, independently verified performance proof;
 - final pass count, generations-to-playable, generations-to-yeti, monotonicity,
-  and generation efficiency may be reported as mechanical columns.
+  and generation efficiency may be reported as separate mechanical columns.
 
-No wall-clock mechanics, networking, random OS state, or manual play are part of
-the mechanical score.
+Networking, random OS state, manual play, self-attested visual polish, and human
+feel are not part of the mechanical rank. Host wall-clock timing and
+driver-reported profile telemetry may appear in v1 evidence only when labeled by
+source.
 
 ## Human feel track
 
