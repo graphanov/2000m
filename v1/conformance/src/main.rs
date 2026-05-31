@@ -1990,9 +1990,14 @@ fn ac17_tunneling_prevention(harness: &Harness) -> CheckResult {
         let steer = steer_toward_obstacle(&s, &["tree", "rock"]);
         let next = step(&mut client, steer, true, false)?.state;
 
-        // Detect tunneling: obstacle was between skier positions but no crash
+        // Detect tunneling: obstacle was between skier positions but no crash.
+        // Some produced games keep skier.y screen-stationary and advance
+        // distanceM as the downhill/world progress, so use whichever forward
+        // coordinate advanced farther for the swept test.
+        let previous_forward = s.skier.y.max(s.distance_m);
+        let next_forward = next.skier.y.max(next.distance_m);
         for obs in &s.obstacles {
-            if obs.y > s.skier.y && obs.y < next.skier.y {
+            if obs.y > previous_forward && obs.y < next_forward {
                 let skier_passed_near = (s.skier.x - obs.x).abs() < 3.0;
                 if skier_passed_near && next.skier.mode != "crashed" {
                     tunneling_count += 1;
@@ -2794,6 +2799,12 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let mut total_allocations: i64 = 0;
     let mut peak_memory: i64 = 0;
     let mut has_quality = false;
+    let mut profile_supported = true;
+    let mut profile_samples = 0usize;
+    let mut allocations_available = false;
+    let mut allocations_unavailable = false;
+    let mut memory_available = false;
+    let mut memory_unavailable = false;
 
     for _ in 0..1000 {
         let before = Instant::now();
@@ -2811,21 +2822,32 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
                 peak_memory = peak_memory.max(mem);
             }
         }
-    }
 
-    // Try profile command. Per protocol, -1 means unavailable and must not be
-    // interpreted as zero allocations or valid memory evidence.
-    let profile_data = profile(&mut client, Some(100)).ok();
-    let mut allocations_available = false;
-    let mut memory_available = false;
-    if let Some(ref pm) = profile_data {
-        if pm.total_allocations >= 0 {
-            allocations_available = true;
-            total_allocations += pm.total_allocations;
-        }
-        if pm.peak_memory_bytes >= 0 {
-            memory_available = true;
-            peak_memory = peak_memory.max(pm.peak_memory_bytes);
+        // Sample allocation/memory telemetry across the whole dense-field run,
+        // not just the tail window. Per protocol, -1 means unavailable.
+        if profile_supported {
+            match profile(&mut client, Some(1)) {
+                Ok(pm) => {
+                    profile_samples += 1;
+                    if pm.total_allocations >= 0 {
+                        allocations_available = true;
+                        total_allocations += pm.total_allocations;
+                    } else {
+                        allocations_unavailable = true;
+                    }
+                    if pm.peak_memory_bytes >= 0 {
+                        memory_available = true;
+                        peak_memory = peak_memory.max(pm.peak_memory_bytes);
+                    } else {
+                        memory_unavailable = true;
+                    }
+                }
+                Err(_) => {
+                    profile_supported = false;
+                    allocations_unavailable = true;
+                    memory_unavailable = true;
+                }
+            }
         }
     }
 
@@ -2841,8 +2863,10 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
     let pass = avg_ms < 16.6
         && p99_ms < 20.0
         && allocations_available
+        && !allocations_unavailable
         && total_allocations == 0
         && memory_available
+        && !memory_unavailable
         && peak_memory > 0
         && peak_memory < 50_000_000;
 
@@ -2868,7 +2892,7 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         90
     } else if peak_memory > 0 {
         60
-    } else if has_quality || profile_data.is_some() {
+    } else if has_quality || profile_samples > 0 {
         70
     } else {
         50
@@ -2887,13 +2911,15 @@ fn ac27_performance_budget(harness: &Harness) -> CheckResult {
         pass,
         quality: breakdown.composite(),
         detail: format!(
-            "avg={:.2}ms p99={:.2}ms allocs={} peak_mem={}MB quality={} profile={}",
+            "avg={:.2}ms p99={:.2}ms allocs={} peak_mem={}MB quality={} profile_samples={} allocations_unavailable={} memory_unavailable={}",
             avg_ms,
             p99_ms,
             total_allocations,
             peak_memory / 1_000_000,
             has_quality,
-            profile_data.is_some()
+            profile_samples,
+            allocations_unavailable,
+            memory_unavailable
         ),
         breakdown,
     })
