@@ -12,7 +12,7 @@ Required row fields for the current v0-style table:
 
 - `model`: display name for the contender.
 - `producedRepo`: produced-game repository or path, not vendored source.
-- `generationCap`: maximum evolve generations used for the run.
+- `generationCap`: maximum attempts/generations used for the run.
 - `trajectory`: array of AC pass counts per generation.
 - `finalPassCount`: final mechanical AC pass count out of 16.
 - `generationsToPlayable`: first generation passing AC1–AC8, or `null`.
@@ -26,3 +26,7 @@ For v1 runs, keep the row explicitly track-labeled and include quality/composite
 fields in evidence until the rendered leaderboard schema is expanded. Evidence
 for v1 timing or polish fields must label whether each field is suite-recomputed,
 host-bound, driver-reported, probe-only, or a constant rubric default.
+
+For v2 runs, keep artifact quality and workflow-resilience components separate.
+A v2 row should point to the generic v2 run record and scenario version; it must
+not require or privilege any particular workflow framework.
