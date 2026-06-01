@@ -991,7 +991,10 @@ fn print_summary(result: &V2Result) {
 mod tests {
     use super::*;
     use serde_json::json;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    static TEST_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
     fn base_scenario() -> Scenario {
         Scenario {
@@ -1123,7 +1126,13 @@ mod tests {
             .duration_since(UNIX_EPOCH)
             .expect("system time before epoch")
             .as_nanos();
-        let dir = env::temp_dir().join(format!("m2000-v2-test-{}-{}", std::process::id(), nonce));
+        let counter = TEST_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let dir = env::temp_dir().join(format!(
+            "m2000-v2-test-{}-{}-{}",
+            std::process::id(),
+            nonce,
+            counter
+        ));
         fs::create_dir_all(&dir).expect("create temp dir");
         let path = dir.join(name);
         fs::write(&path, serde_json::to_string_pretty(&value).unwrap()).expect("write temp json");
@@ -1177,6 +1186,86 @@ mod tests {
             "compositeScore": composite_score,
             "acs": acs
         })
+    }
+
+    fn example_path(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../examples")
+            .join(name)
+    }
+
+    fn read_example<T: for<'de> serde::Deserialize<'de>>(name: &str) -> T {
+        read_json(&example_path(name)).expect("example JSON parses into scorer contract")
+    }
+
+    #[test]
+    fn pilot_good_fixture_is_ranked_and_separates_components() {
+        let scenario: Scenario = read_example("workflow-resilience-pilot.scenario.json");
+        let run: RunRecord = read_example("pilot-good-run-record.json");
+        let result = score_run(&scenario, &run, &example_path("pilot-good-run-record.json"))
+            .expect("score pilot fixture");
+        assert!(result.ranked, "{:?}", result.warnings);
+        assert_eq!(result.components.artifact_quality.score, 50.0);
+        assert_eq!(result.components.feedback_integration.score, 100.0);
+        assert_eq!(result.components.recovery_handoff.score, 100.0);
+        assert_eq!(result.components.stop_condition.score, 100.0);
+        assert_eq!(result.components.evidence_replay.score, 100.0);
+        assert_eq!(result.composite_score, 80.0);
+    }
+
+    #[test]
+    fn pilot_weak_ranked_fixture_keeps_components_visible() {
+        let scenario: Scenario = read_example("workflow-resilience-pilot.scenario.json");
+        let run: RunRecord = read_example("pilot-weak-ranked-run-record.json");
+        let result = score_run(
+            &scenario,
+            &run,
+            &example_path("pilot-weak-ranked-run-record.json"),
+        )
+        .expect("score weak pilot fixture");
+        assert!(result.ranked, "{:?}", result.warnings);
+        assert_eq!(result.components.artifact_quality.score, 50.0);
+        assert_eq!(result.components.stop_condition.score, 60.0);
+        assert_eq!(result.components.evidence_replay.score, 80.0);
+        assert_eq!(result.composite_score, 72.0);
+    }
+
+    #[test]
+    fn pilot_rank_block_fixtures_do_not_rank() {
+        let scenario: Scenario = read_example("workflow-resilience-pilot.scenario.json");
+        for name in [
+            "pilot-missing-output-run-record.json",
+            "pilot-private-path-run-record.json",
+        ] {
+            let run: RunRecord = read_example(name);
+            let result = score_run(&scenario, &run, &example_path(name)).expect("score fixture");
+            assert!(!result.ranked, "{} unexpectedly ranked", name);
+            assert!(
+                result
+                    .warnings
+                    .iter()
+                    .any(|warning| warning.starts_with("RANK-BLOCK:")),
+                "{} did not include a rank-block warning: {:?}",
+                name,
+                result.warnings
+            );
+        }
+    }
+
+    #[test]
+    fn pilot_wrong_stop_fixture_scores_low_without_blocking_artifact_score() {
+        let scenario: Scenario = read_example("workflow-resilience-pilot.scenario.json");
+        let run: RunRecord = read_example("pilot-wrong-stop-run-record.json");
+        let result = score_run(
+            &scenario,
+            &run,
+            &example_path("pilot-wrong-stop-run-record.json"),
+        )
+        .expect("score wrong-stop pilot fixture");
+        assert!(result.ranked, "{:?}", result.warnings);
+        assert_eq!(result.components.artifact_quality.score, 50.0);
+        assert_eq!(result.components.stop_condition.score, 0.0);
+        assert_eq!(result.composite_score, 65.0);
     }
 
     #[test]

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "2000m.v2.result.v1",
+  "scenarioId": "workflow-resilience-pilot",
+  "scenarioVersion": 1,
+  "entrant": "calibration-missing-output-record",
+  "processType": "scripted-agent-loop",
+  "ranked": false,
+  "compositeScore": 65.0,
+  "components": {
+    "artifactQuality": {
+      "score": 50.0,
+      "detail": "from verified v1 conformance result"
+    },
+    "feedbackIntegration": {
+      "score": 100.0,
+      "detail": "4/4 feedback phases covered"
+    },
+    "recoveryHandoff": {
+      "score": 0.0,
+      "detail": "0/1 recovery phases covered"
+    },
+    "stopCondition": {
+      "score": 100.0,
+      "detail": "correctly avoids blind continuation for trap types: impossible, probe-only, stale"
+    },
+    "evidenceReplay": {
+      "score": 100.0,
+      "detail": "build, score, commit, and evidence replayability checks"
+    }
+  },
+  "warnings": [
+    "RANK-BLOCK: phase `context-wipe` missing required output `handoff-summary`",
+    "context-wipe recovery phase `context-wipe` lacks non-empty handoff-summary"
+  ]
+}

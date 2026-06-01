@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v2/result.schema.json",
+  "title": "2000m v2 scorer result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "scenarioVersion",
+    "entrant",
+    "processType",
+    "ranked",
+    "compositeScore",
+    "components",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v2.result.v1"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,80}$"
+    },
+    "scenarioVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "entrant": {
+      "type": "string",
+      "minLength": 1
+    },
+    "processType": {
+      "type": "string",
+      "enum": ["single-model", "model-plus-operator", "scripted-agent-loop", "workflow-system", "other"]
+    },
+    "ranked": {
+      "type": "boolean"
+    },
+    "compositeScore": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "components": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactQuality", "feedbackIntegration", "recoveryHandoff", "stopCondition", "evidenceReplay"],
+      "properties": {
+        "artifactQuality": { "$ref": "#/$defs/componentScore" },
+        "feedbackIntegration": { "$ref": "#/$defs/componentScore" },
+        "recoveryHandoff": { "$ref": "#/$defs/componentScore" },
+        "stopCondition": { "$ref": "#/$defs/componentScore" },
+        "evidenceReplay": { "$ref": "#/$defs/componentScore" }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "componentScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score", "detail"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "detail": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

@@ -11,8 +11,9 @@ v2 exists because v0 and v1 mostly measure the final produced game. They are use
 - [`DESIGN.md`](DESIGN.md) — design brief, neutrality rules, scenario phases, scoring model, and implementation plan.
 - [`scenario.schema.json`](scenario.schema.json) — draft machine-readable scenario contract for v2 fixtures.
 - [`run-record.schema.json`](run-record.schema.json) — draft entrant-submitted run record contract for v2 scoring.
+- [`result.schema.json`](result.schema.json) — machine-readable scorer result contract for rendered result rows.
 - [`conformance/`](conformance/) — first v2 scorer/harness crate.
-- [`examples/`](examples/) — public smoke scenario, weak sample run record, and sample v1 conformance input.
+- [`examples/`](examples/) — public smoke scenario, pilot scenario, golden run-record fixtures, sample v1 conformance input, and generated scorer-result fixtures.
 
 ## Run the v2 scorer
 
@@ -24,6 +25,33 @@ cargo run --manifest-path v2/conformance/Cargo.toml -- \
 ```
 
 The included weak sample should score below ceiling. It is a scorer smoke fixture, not a contender result.
+
+## Pilot calibration pack
+
+The [`examples/`](examples/) directory also contains a `workflow-resilience-pilot`
+scenario and five golden run records:
+
+- a ranked complete workflow fixture;
+- a ranked but weaker fixture;
+- a wrong-stop-decision fixture;
+- a rank-blocked missing-output fixture;
+- a rank-blocked private-path fixture.
+
+Generate or check their result rows with:
+
+```bash
+mkdir -p v2/examples/results
+for name in good weak-ranked missing-output private-path wrong-stop; do
+  cargo run --quiet -p m2000-v2-conformance -- \
+    v2/examples/workflow-resilience-pilot.scenario.json \
+    v2/examples/pilot-${name}-run-record.json \
+    --json-out v2/examples/results/pilot-${name}-result.json
+done
+python3 scripts/render_results.py --check
+```
+
+Those rows exercise the result spine. They are calibration fixtures only, not a
+public model/workflow leaderboard.
 
 ## Boundary
 

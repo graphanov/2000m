@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "2000m.v2.run-record.v1",
+  "scenarioId": "workflow-resilience-pilot",
+  "scenarioVersion": 1,
+  "entrant": {
+    "label": "calibration-missing-output-record",
+    "processType": "scripted-agent-loop",
+    "notes": "Public rank-block fixture: missing required handoff output."
+  },
+  "artifact": {
+    "repoOrPath": "https://github.com/example/2000m-weak-entry",
+    "commitOrDigest": "abc123-public-fixture",
+    "buildCommand": "cargo build --locked",
+    "scoreCommand": "cargo run --manifest-path v1/conformance/Cargo.toml -- https://github.com/example/2000m-weak-entry --json-out v2/examples/v1-conformance-sample.json",
+    "v1ConformanceJson": "v1-conformance-sample.json"
+  },
+  "phases": [
+    {
+      "phaseId": "initial-build",
+      "outputs": {
+        "artifact-ref": "https://github.com/example/2000m-weak-entry/tree/abc123-public-fixture",
+        "build-command": "cargo build --locked",
+        "score-command": "cargo run --manifest-path v1/conformance/Cargo.toml -- https://github.com/example/2000m-weak-entry --json-out v1-conformance.json",
+        "conformance-json": "v1-conformance-sample.json"
+      }
+    },
+    {
+      "phaseId": "scorer-feedback",
+      "outputs": {
+        "conformance-json": "v1-conformance-sample.json",
+        "evidence-ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/scorer-feedback.md"
+      },
+      "feedbackResponses": [
+        {
+          "feedbackId": "v1-ac28-probe-only",
+          "decision": "needs_scorer_inspection",
+          "rationale": "The feedback is based on probe-only visual-polish evidence, so it should not be claimed as a ranked pass.",
+          "evidenceRef": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/scorer-feedback.md"
+        }
+      ]
+    },
+    {
+      "phaseId": "context-wipe",
+      "outputs": {
+        "evidence-ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/handoff-summary.md"
+      }
+    },
+    {
+      "phaseId": "trap-probe-only",
+      "outputs": {
+        "stop-recommendation": "inspect_scorer",
+        "evidence-ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/probe-only-trap.md"
+      },
+      "feedbackResponses": [
+        {
+          "feedbackId": "probe-only-visual-polish",
+          "decision": "needs_scorer_inspection",
+          "rationale": "Probe-only visual strings can support diagnostics but cannot satisfy ranked visual quality by themselves.",
+          "evidenceRef": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/probe-only-trap.md"
+        }
+      ]
+    },
+    {
+      "phaseId": "trap-stale",
+      "outputs": {
+        "stop-recommendation": "inspect_scorer",
+        "evidence-ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/stale-requirement.md"
+      },
+      "feedbackResponses": [
+        {
+          "feedbackId": "stale-ac-wording",
+          "decision": "needs_scorer_inspection",
+          "rationale": "The requirement text no longer matches the current scorer contract, so the run should not burn another attempt before inspection.",
+          "evidenceRef": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/stale-requirement.md"
+        }
+      ]
+    },
+    {
+      "phaseId": "trap-impossible",
+      "outputs": {
+        "stop-recommendation": "redesign",
+        "evidence-ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/impossible-requirement.md"
+      },
+      "feedbackResponses": [
+        {
+          "feedbackId": "impossible-driver-claim",
+          "decision": "rejected_with_reason",
+          "rationale": "The requirement asks the driver to prove a property it cannot observe, so the benchmark contract needs redesign instead of another retry.",
+          "evidenceRef": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/impossible-requirement.md"
+        }
+      ]
+    },
+    {
+      "phaseId": "final-decision",
+      "outputs": {
+        "stop-recommendation": "inspect_scorer",
+        "evidence-ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/final-decision.md"
+      }
+    }
+  ],
+  "finalRecommendation": {
+    "decision": "inspect_scorer",
+    "rationale": "Trap phases are present, so a ranked workflow should inspect the scorer or redesign instead of blindly continuing."
+  },
+  "evidence": [
+    {
+      "label": "produced artifact",
+      "ref": "https://github.com/example/2000m-weak-entry/tree/abc123-public-fixture",
+      "kind": "repo"
+    },
+    {
+      "label": "v1 conformance",
+      "ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/v1-conformance-sample.json",
+      "kind": "conformance-json"
+    },
+    {
+      "label": "handoff summary",
+      "ref": "https://github.com/example/2000m-weak-entry/blob/abc123/evidence/handoff-summary.md",
+      "kind": "summary"
+    }
+  ]
+}

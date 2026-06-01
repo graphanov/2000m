@@ -2,7 +2,7 @@
 
 ## Status
 
-Initial implementation. This document defines the benchmark-v2 contract and the first scorer/harness implementation. It does not launch models and does not claim that any entrant wins.
+Initial implementation plus calibration/result-spine support. This document defines the benchmark-v2 contract, the first scorer/harness implementation, and the public calibration fixtures. It does not launch models and does not claim that any entrant wins.
 
 ## Why v2 exists
 
@@ -170,7 +170,7 @@ Not allowed:
 
 ## Implementation status
 
-Implemented in the first scorer/harness slice:
+Implemented in the first scorer/harness and calibration slices:
 
 1. v2 Rust crate for scenario loading, run-record loading, and scoring.
 2. Public starter scenario and weak sample run record.
@@ -178,13 +178,20 @@ Implemented in the first scorer/harness slice:
 4. v1 conformance JSON as the first artifact-quality input.
 5. CLI command to score a v2 run record against a scenario.
 6. CI-capable smoke that validates the weak sample scores below ceiling.
+7. Public pilot scenario covering feedback, context wipe, probe-only, stale,
+   impossible, and stop-decision phases.
+8. Golden calibration run records for complete, weak-ranked, wrong-stop,
+   missing-output rank-blocked, and private-path rank-blocked cases.
+9. Machine-readable v2 result schema plus rendered result-spine support in
+   `results/results.json` and `results/leaderboard.md`.
 
 Still future work:
 
 - hidden/private scenario variants;
+- real private calibration pilot with live contenders;
 - model/runtime launcher integration, if ever needed;
 - richer reviewer packet fixtures;
-- results leaderboard rendering for v2 rows.
+- non-fixture v2 result rows once a real run has been produced and reviewed.
 
 ## Acceptance criteria for the first implementation slice
 
@@ -195,3 +202,16 @@ Still future work:
 - v2 scorer can consume v1 conformance JSON as artifact-quality input.
 - v2 scorer emits machine-readable JSON and a compact human summary.
 - CI proves the included weak sample scores below ceiling.
+
+## Acceptance criteria for the calibration/result-spine slice
+
+- v2 result rows keep artifact quality and workflow-resilience components
+  visible as separate fields.
+- the pilot scenario covers feedback use, context-wipe recovery,
+  impossible/stale/probe-only traps, and final stop decisions.
+- golden fixtures include ranked, weak-ranked, wrong-stop, missing-output
+  rank-blocked, and private-path rank-blocked examples.
+- the rendered result spine is generated from machine-readable scorer output and
+  can be checked in CI.
+- public docs state that calibration fixtures are not contender results, model
+  rankings, or workflow-framework superiority claims.

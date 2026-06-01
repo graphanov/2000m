@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "2000m.v2.result.v1",
+  "scenarioId": "workflow-resilience-pilot",
+  "scenarioVersion": 1,
+  "entrant": "calibration-good-record",
+  "processType": "scripted-agent-loop",
+  "ranked": true,
+  "compositeScore": 80.0,
+  "components": {
+    "artifactQuality": {
+      "score": 50.0,
+      "detail": "from verified v1 conformance result"
+    },
+    "feedbackIntegration": {
+      "score": 100.0,
+      "detail": "4/4 feedback phases covered"
+    },
+    "recoveryHandoff": {
+      "score": 100.0,
+      "detail": "1/1 recovery phases covered"
+    },
+    "stopCondition": {
+      "score": 100.0,
+      "detail": "correctly avoids blind continuation for trap types: impossible, probe-only, stale"
+    },
+    "evidenceReplay": {
+      "score": 100.0,
+      "detail": "build, score, commit, and evidence replayability checks"
+    }
+  },
+  "warnings": []
+}

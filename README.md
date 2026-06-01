@@ -38,7 +38,9 @@ probe-only signals clearly labeled.
 The v2 scorer/harness, under [`v2/`](v2/), keeps the benchmark independent while
 adding a workflow-resilience track around interruption recovery, feedback use,
 stop-condition correctness, and replayable evidence. It consumes generic
-scenario and run-record contracts and does not privilege any workflow framework.
+scenario and run-record contracts, emits a machine-readable result contract, and
+does not privilege any workflow framework. The current v2 rows are calibration
+fixtures, not contender results.
 
 One protocol `step` is one deterministic logic tick. The stable scorecard keeps
 manual play, networking, random OS state, and human visual taste out of
@@ -142,7 +144,7 @@ cargo run --manifest-path v1/conformance/Cargo.toml -- path/to/produced-game
 | [`protocol/2000m.json.schema.json`](protocol/2000m.json.schema.json) | Manifest checkpoint for produced-game launch metadata. |
 | [`conformance/`](conformance/) | v0 judge/scorer with 16 mechanical ACs. |
 | [`v1/`](v1/) | v1 protocol, 28-AC spec, quality-scored conformance suite, and weak v1 stub smoke. |
-| [`v2/`](v2/) | Workflow-resilience scorer/harness with generic scenario/run-record contracts. |
+| [`v2/`](v2/) | Workflow-resilience scorer/harness with generic scenario/run-record/result contracts and calibration fixtures. |
 | [`stub-driver/`](stub-driver/) | Smoke-test skier that shows the v0 harness path works while failing most ACs. |
 | [`results/README.md`](results/README.md) | Scorecard format for benchmark rows. |
 | [`results/leaderboard.md`](results/leaderboard.md) | Rendered mechanical scoreboard. |

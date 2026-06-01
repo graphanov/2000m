@@ -2,7 +2,8 @@
 
 This is the scoreboard format checkpoint for 2000m. [`results.json`](results.json)
 stores benchmark rows, and [`leaderboard.md`](leaderboard.md) is the rendered
-table for humans.
+table for humans. Run `python3 scripts/render_results.py --check` to verify that
+the rendered table matches the machine-readable result spine.
 
 Mechanical columns determine rank through the track-labeled AC-pass trajectory
 and related fields. Human feel is operator taste, not score, and never affects
@@ -28,5 +29,16 @@ for v1 timing or polish fields must label whether each field is suite-recomputed
 host-bound, driver-reported, probe-only, or a constant rubric default.
 
 For v2 runs, keep artifact quality and workflow-resilience components separate.
-A v2 row should point to the generic v2 run record and scenario version; it must
-not require or privilege any particular workflow framework.
+A v2 row points to the generic v2 run record, scenario version, and scorer result
+JSON; it must not require or privilege any particular workflow framework.
+Calibration fixtures may live in the result spine only when their claim boundary
+says they are not contender results.
+
+Required row fields for `v2Rows`:
+
+- `track`: currently `v2-workflow-resilience`.
+- `scenario`: public scenario JSON path.
+- `runRecord`: public generic run-record JSON path.
+- `resultJson`: scorer output matching `v2/result.schema.json`.
+- `claimBoundary`: plain-language limit such as “calibration fixture, not a
+  contender result.”
