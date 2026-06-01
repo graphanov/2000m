@@ -41,7 +41,7 @@ struct ScenarioPhase {
     _prompt: String,
     #[serde(default, rename = "allowedInputs")]
     _allowed_inputs: Vec<String>,
-    #[serde(default, rename = "requiredOutputs")]
+    #[serde(rename = "requiredOutputs")]
     required_outputs: Vec<String>,
     #[serde(default, rename = "trapType")]
     trap_type: Option<String>,
@@ -496,21 +496,24 @@ fn score_artifact_quality(
     warnings: &mut Vec<String>,
 ) -> ComponentScore {
     let Some(ref_path) = &run.artifact.v1_conformance_json else {
-        warnings.push("artifact has no v1ConformanceJson; artifact quality is zero".to_string());
+        warnings.push(
+            "RANK-BLOCK: artifact has no v1ConformanceJson for v1-artifact-score; artifact quality is zero"
+                .to_string(),
+        );
         return component(0.0, "missing v1 conformance JSON");
     };
 
     let path = resolve_ref(run_record_path, ref_path);
     let Ok(text) = fs::read_to_string(&path) else {
         warnings.push(format!(
-            "artifact conformance JSON `{}` could not be read; artifact quality is zero",
+            "RANK-BLOCK: artifact conformance JSON `{}` could not be read; artifact quality is zero",
             ref_path
         ));
         return component(0.0, "unreadable v1 conformance JSON");
     };
     let Ok(json) = serde_json::from_str::<Value>(&text) else {
         warnings.push(format!(
-            "artifact conformance JSON `{}` could not be parsed; artifact quality is zero",
+            "RANK-BLOCK: artifact conformance JSON `{}` could not be parsed; artifact quality is zero",
             ref_path
         ));
         return component(0.0, "invalid v1 conformance JSON");
@@ -529,7 +532,7 @@ fn score_artifact_quality(
         ),
         _ => {
             warnings.push(format!(
-                "artifact conformance JSON `{}` lacks compositeScore and passCount/totalAcs; artifact quality is zero",
+                "RANK-BLOCK: artifact conformance JSON `{}` lacks compositeScore and passCount/totalAcs; artifact quality is zero",
                 ref_path
             ));
             component(0.0, "missing scorer fields")
@@ -1030,6 +1033,34 @@ mod tests {
             warning.contains("private or local-only evidence ref")
                 && warning.contains("/Users/private/v1.json")
         }));
+    }
+
+    #[test]
+    fn missing_v1_conformance_json_blocks_public_ranking() {
+        let run_file = env::temp_dir().join("run-record.json");
+        let scenario = base_scenario();
+        let mut run = base_run("v1.json".to_string());
+        run.artifact.v1_conformance_json = None;
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result.warnings.iter().any(|warning| {
+            warning.starts_with("RANK-BLOCK:") && warning.contains("v1ConformanceJson")
+        }));
+    }
+
+    #[test]
+    fn missing_scenario_required_outputs_is_rejected_during_parse() {
+        let mut value: Value = serde_json::from_str(include_str!(
+            "../../examples/workflow-resilience-smoke.scenario.json"
+        ))
+        .expect("example parses");
+        value["phases"][0]
+            .as_object_mut()
+            .expect("phase object")
+            .remove("requiredOutputs");
+        let err = serde_json::from_value::<Scenario>(value).expect_err("missing field rejected");
+        assert!(err.to_string().contains("requiredOutputs"));
     }
 
     #[test]
