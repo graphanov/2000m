@@ -679,6 +679,9 @@ fn v1_game_dir_matches_artifact(game_dir: &str, repo_or_path: &str) -> bool {
     if game_dir == repo_or_path {
         return true;
     }
+    if !looks_private_or_local(game_dir) {
+        return false;
+    }
     match (artifact_tail(game_dir), artifact_tail(repo_or_path)) {
         (Some(game_tail), Some(artifact_tail)) => game_tail == artifact_tail,
         _ => false,
@@ -1309,6 +1312,23 @@ mod tests {
     fn mismatched_v1_game_dir_blocks_public_ranking() {
         let mut fake = v1_result(50.0);
         fake["gameDir"] = json!("https://github.com/example/other-entry");
+        let (_dir, conformance_path) = write_temp_json("v1.json", fake);
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let run = base_run("v1.json".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result
+            .warnings
+            .iter()
+            .any(|warning| { warning.starts_with("RANK-BLOCK:") && warning.contains("gameDir") }));
+    }
+
+    #[test]
+    fn public_v1_game_dir_with_only_matching_slug_blocks_public_ranking() {
+        let mut fake = v1_result(50.0);
+        fake["gameDir"] = json!("https://github.com/other-owner/2000m-entry");
         let (_dir, conformance_path) = write_temp_json("v1.json", fake);
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
