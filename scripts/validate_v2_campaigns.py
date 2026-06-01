@@ -136,7 +136,8 @@ def validate_lanes(campaign: dict[str, Any]) -> None:
         require(isinstance(pair_lanes, list) and len(pair_lanes) > 0, f"pair {pair_id} must list enabledLanes")
         assert isinstance(pair_lanes, list)
         require(set(pair_lanes).issubset(enabled), f"pair {pair_id} references disabled lane")
-        require({"A", "B"}.issubset(set(pair_lanes)), f"pair {pair_id} must include Lane A and Lane B")
+        require(len(pair_lanes) == 2, f"pair {pair_id} must list exactly two enabled lanes in campaign schema v1")
+        require(set(pair_lanes) == {"A", "B"}, f"pair {pair_id} must be exactly the A/B pair in campaign schema v1")
 
 
 def validate_controls(campaign: dict[str, Any]) -> None:
