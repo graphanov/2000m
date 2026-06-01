@@ -236,6 +236,7 @@ fn score_run(
     let mut warnings = Vec::new();
     validate_contract_identity(scenario, run, &mut warnings)?;
     validate_neutrality(scenario, &mut warnings);
+    validate_required_outputs(scenario, run, &mut warnings);
 
     let artifact_quality = score_artifact_quality(run, run_record_path, &mut warnings);
     let feedback_integration = score_feedback_integration(scenario, run, &mut warnings);
@@ -344,6 +345,36 @@ fn validate_neutrality(scenario: &Scenario, warnings: &mut Vec<String>) {
                 rule
             ));
         }
+    }
+}
+
+fn validate_required_outputs(scenario: &Scenario, run: &RunRecord, warnings: &mut Vec<String>) {
+    for scenario_phase in &scenario.phases {
+        let Some(run_phase) = run_phase(run, &scenario_phase.phase_id) else {
+            for required in &scenario_phase.required_outputs {
+                warnings.push(format!(
+                    "RANK-BLOCK: phase `{}` missing required output `{}` because the phase is absent",
+                    scenario_phase.phase_id, required
+                ));
+            }
+            continue;
+        };
+
+        for required in &scenario_phase.required_outputs {
+            if !required_output_satisfied(run_phase, required) {
+                warnings.push(format!(
+                    "RANK-BLOCK: phase `{}` missing required output `{}`",
+                    scenario_phase.phase_id, required
+                ));
+            }
+        }
+    }
+}
+
+fn required_output_satisfied(phase: &RunPhase, required: &str) -> bool {
+    match required {
+        "feedback-response" => !phase.feedback_responses.is_empty(),
+        _ => has_nonempty_output(phase, required),
     }
 }
 
@@ -557,9 +588,12 @@ fn score_evidence_replay(run: &RunRecord, warnings: &mut Vec<String>) -> Compone
         score = 0.0;
     }
 
-    for value in
-        std::iter::once(&run.artifact.repo_or_path).chain(run.evidence.iter().map(|e| &e.reference))
-    {
+    let evidence_refs = run
+        .evidence
+        .iter()
+        .map(|e| &e.reference)
+        .chain(run.artifact.v1_conformance_json.iter());
+    for value in std::iter::once(&run.artifact.repo_or_path).chain(evidence_refs) {
         if looks_private_or_local(value) {
             warnings.push(format!(
                 "RANK-BLOCK: private or local-only evidence ref is not rankable: `{}`",
@@ -768,6 +802,14 @@ mod tests {
                     )]),
                     feedback_responses: vec![],
                 },
+                RunPhase {
+                    phase_id: "trap".to_string(),
+                    outputs: BTreeMap::from([(
+                        "stop-recommendation".to_string(),
+                        json!("inspect_scorer"),
+                    )]),
+                    feedback_responses: vec![],
+                },
             ],
             final_recommendation: FinalRecommendation {
                 decision: "inspect_scorer".to_string(),
@@ -850,6 +892,42 @@ mod tests {
         let result = score_run(&scenario, &run, &run_file).expect("score run");
         assert!(!result.ranked);
         assert_eq!(result.components.evidence_replay.score, 0.0);
+    }
+
+    #[test]
+    fn private_v1_conformance_path_blocks_public_ranking() {
+        let (_dir, conformance_path) =
+            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let run = base_run("/Users/private/v1.json".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert!(result.warnings.iter().any(|warning| {
+            warning.contains("private or local-only evidence ref")
+                && warning.contains("/Users/private/v1.json")
+        }));
+    }
+
+    #[test]
+    fn missing_generic_required_outputs_block_public_ranking() {
+        let (_dir, conformance_path) =
+            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let mut run = base_run("v1.json".to_string());
+        let trap = run
+            .phases
+            .iter_mut()
+            .find(|phase| phase.phase_id == "trap")
+            .expect("base run has trap phase");
+        trap.outputs.clear();
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert!(result
+            .warnings
+            .iter()
+            .any(|warning| warning.contains("phase `trap` missing required output")));
     }
 
     #[test]
