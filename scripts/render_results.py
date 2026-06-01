@@ -97,18 +97,30 @@ def validate_v2_row(row: dict[str, Any]) -> dict[str, Any]:
         require(isinstance(row[key], str) and row[key].strip(), f"v2 row `{key}` must be a non-empty string")
         check_public_ref(row[key], f"v2 {key}")
     require(row["track"] == "v2-workflow-resilience", f"unsupported v2 track `{row['track']}`")
+
+    scenario_path = ROOT / row["scenario"]
+    run_record_path = ROOT / row["runRecord"]
     result_path = ROOT / row["resultJson"]
+    require(scenario_path.exists(), f"v2 scenario missing: {row['scenario']}")
+    require(run_record_path.exists(), f"v2 run record missing: {row['runRecord']}")
+
+    scenario = load_json(scenario_path)
+    run_record = load_json(run_record_path)
     result = load_json(result_path)
+    require(scenario.get("schemaVersion") == "2000m.v2.scenario.v1", f"{row['scenario']} has wrong schemaVersion")
+    require(run_record.get("schemaVersion") == "2000m.v2.run-record.v1", f"{row['runRecord']} has wrong schemaVersion")
     require(result.get("schemaVersion") == "2000m.v2.result.v1", f"{row['resultJson']} has wrong schemaVersion")
+    require(result.get("scenarioId") == scenario.get("scenarioId"), f"{row['resultJson']} scenarioId does not match {row['scenario']}")
+    require(result.get("scenarioVersion") == scenario.get("scenarioVersion"), f"{row['resultJson']} scenarioVersion does not match {row['scenario']}")
+    require(result.get("scenarioId") == run_record.get("scenarioId"), f"{row['resultJson']} scenarioId does not match {row['runRecord']}")
+    require(result.get("scenarioVersion") == run_record.get("scenarioVersion"), f"{row['resultJson']} scenarioVersion does not match {row['runRecord']}")
+    require(result.get("entrant") == run_record.get("entrant", {}).get("label"), f"{row['resultJson']} entrant does not match {row['runRecord']}")
+    require(result.get("processType") == run_record.get("entrant", {}).get("processType"), f"{row['resultJson']} processType does not match {row['runRecord']}")
     require(isinstance(result.get("ranked"), bool), f"{row['resultJson']} missing ranked bool")
     require(isinstance(result.get("compositeScore"), (int, float)), f"{row['resultJson']} missing compositeScore")
     for component in ["artifactQuality", "feedbackIntegration", "recoveryHandoff", "stopCondition", "evidenceReplay"]:
         value = result.get("components", {}).get(component, {})
         require(isinstance(value.get("score"), (int, float)), f"{row['resultJson']} missing {component}.score")
-    require(result.get("scenarioId"), f"{row['resultJson']} missing scenarioId")
-    require(result.get("entrant"), f"{row['resultJson']} missing entrant")
-    require((ROOT / row["scenario"]).exists(), f"v2 scenario missing: {row['scenario']}")
-    require((ROOT / row["runRecord"]).exists(), f"v2 run record missing: {row['runRecord']}")
     return result
 
 
