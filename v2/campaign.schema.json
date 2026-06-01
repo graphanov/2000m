@@ -162,7 +162,7 @@
     "lane": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["laneId", "label", "role", "enabled", "allowedTools", "forbiddenAdvantages", "requiredEvidence"],
+      "required": ["laneId", "label", "role", "enabled", "controllerStatus", "allowedTools", "forbiddenAdvantages", "requiredEvidence"],
       "properties": {
         "laneId": { "type": "string", "enum": ["A", "B", "C"] },
         "label": { "type": "string", "minLength": 1 },
@@ -187,7 +187,39 @@
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "laneId": { "const": "A" } } },
+          "then": {
+            "properties": {
+              "role": { "const": "naked-model-baseline" },
+              "enabled": { "const": true },
+              "controllerStatus": { "const": "not-applicable" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "laneId": { "const": "B" } } },
+          "then": {
+            "properties": {
+              "role": { "const": "open-scaffold-ledger-analyze" },
+              "enabled": { "const": true },
+              "controllerStatus": { "const": "not-applicable" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "laneId": { "const": "C" } } },
+          "then": {
+            "properties": {
+              "role": { "const": "controller" },
+              "enabled": { "const": false },
+              "controllerStatus": { "const": "not-implemented" }
+            }
+          }
+        }
+      ]
     },
     "pair": {
       "type": "object",

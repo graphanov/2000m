@@ -122,12 +122,21 @@ def validate_lanes(campaign: dict[str, Any]) -> None:
     require("compact evidence" in lane_b_tools, "Lane B must require compact evidence")
 
     enabled = {lane_id for lane_id, lane in by_id.items() if lane.get("enabled")}
+    seen_pair_ids: set[str] = set()
+    seen_task_seeds: set[int] = set()
     for pair in campaign["pairs"]:
+        pair_id = require_string(pair, "pairId")
+        require(pair_id not in seen_pair_ids, f"duplicate pairId `{pair_id}`")
+        seen_pair_ids.add(pair_id)
+        task_seed = pair.get("taskSeed")
+        require(isinstance(task_seed, int), f"pair {pair_id} taskSeed must be integer")
+        require(task_seed not in seen_task_seeds, f"duplicate taskSeed `{task_seed}` would inflate paired campaign size")
+        seen_task_seeds.add(task_seed)
         pair_lanes = pair.get("enabledLanes")
-        require(isinstance(pair_lanes, list) and len(pair_lanes) > 0, f"pair {pair.get('pairId')} must list enabledLanes")
+        require(isinstance(pair_lanes, list) and len(pair_lanes) > 0, f"pair {pair_id} must list enabledLanes")
         assert isinstance(pair_lanes, list)
-        require(set(pair_lanes).issubset(enabled), f"pair {pair.get('pairId')} references disabled lane")
-        require({"A", "B"}.issubset(set(pair_lanes)), f"pair {pair.get('pairId')} must include Lane A and Lane B")
+        require(set(pair_lanes).issubset(enabled), f"pair {pair_id} references disabled lane")
+        require({"A", "B"}.issubset(set(pair_lanes)), f"pair {pair_id} must include Lane A and Lane B")
 
 
 def validate_controls(campaign: dict[str, Any]) -> None:
