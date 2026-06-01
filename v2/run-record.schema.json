@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v2/run-record.schema.json",
+  "title": "2000m v2 run record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "scenarioVersion",
+    "entrant",
+    "artifact",
+    "phases",
+    "finalRecommendation",
+    "evidence"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v2.run-record.v1"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,80}$"
+    },
+    "scenarioVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "entrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "processType"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "processType": {
+          "type": "string",
+          "enum": ["single-model", "model-plus-operator", "scripted-agent-loop", "workflow-system", "other"]
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repoOrPath", "commitOrDigest", "buildCommand", "scoreCommand"],
+      "properties": {
+        "repoOrPath": { "type": "string", "minLength": 1 },
+        "commitOrDigest": { "type": "string", "minLength": 1 },
+        "buildCommand": { "type": "string", "minLength": 1 },
+        "scoreCommand": { "type": "string", "minLength": 1 },
+        "v1ConformanceJson": { "type": "string" }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/phaseRecord" }
+    },
+    "finalRecommendation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision", "rationale"],
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": ["continue", "stop", "redesign", "inspect_scorer"]
+        },
+        "rationale": { "type": "string", "minLength": 1 }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/evidenceRef" }
+    }
+  },
+  "$defs": {
+    "phaseRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["phaseId", "outputs"],
+      "properties": {
+        "phaseId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{1,80}$"
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean", "object", "array", "null"]
+          }
+        },
+        "feedbackResponses": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/feedbackResponse" }
+        }
+      }
+    },
+    "feedbackResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feedbackId", "decision", "rationale"],
+      "properties": {
+        "feedbackId": { "type": "string", "minLength": 1 },
+        "decision": {
+          "type": "string",
+          "enum": ["accepted", "rejected_with_reason", "needs_scorer_inspection", "deferred"]
+        },
+        "rationale": { "type": "string", "minLength": 1 },
+        "evidenceRef": { "type": "string" }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "ref"],
+      "properties": {
+        "label": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 },
+        "kind": {
+          "type": "string",
+          "enum": ["repo", "commit", "conformance-json", "log", "summary", "other"]
+        }
+      }
+    }
+  }
+}

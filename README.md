@@ -7,8 +7,9 @@ game, not a game solution, and not a general intelligence scorecard. Build the
 skier elsewhere; this repo runs the mountain.
 
 The skier can be playful. The scoreboard is not: rank comes from deterministic
-protocol checks. The repo now has two course markers: **v0 / 16 mechanical ACs**
-for the baseline harness, and **v1 / 28 ACs with quality scoring** in [`v1/`](v1/).
+protocol checks. The repo now has three course markers: **v0 / 16 mechanical ACs**
+for the baseline harness, **v1 / 28 ACs with quality scoring** in [`v1/`](v1/),
+and a **v2 workflow-resilience design draft** in [`v2/`](v2/).
 
 ## The run, in one screen
 
@@ -23,7 +24,7 @@ for the baseline harness, and **v1 / 28 ACs with quality scoring** in [`v1/`](v1
 
 ## What the mountain scores
 
-The baseline v0 rank is the **AC-pass trajectory across evolve generations**.
+The baseline v0 rank is the **AC-pass trajectory across attempts/generations**.
 Before those ACs are trusted, the conformance suite checks seed determinism. The
 v0 suite evaluates **16 mechanical** acceptance criteria, from basic skier state
 through 2000m monster behavior.
@@ -33,6 +34,11 @@ mechanics, challenge depth, polish, and optimization. It adds quality scoring so
 "barely passes" and stronger implementations can be reported with more nuance,
 but each v1 result must keep measured, host-bound, driver-reported, and
 probe-only signals clearly labeled.
+
+The v2 design draft, under [`v2/`](v2/), keeps the benchmark independent while
+adding a workflow-resilience track around interruption recovery, feedback use,
+stop-condition correctness, and replayable evidence. v2 is not implemented yet
+and does not privilege any workflow framework.
 
 One protocol `step` is one deterministic logic tick. The stable scorecard keeps
 manual play, networking, random OS state, and human visual taste out of
@@ -136,6 +142,7 @@ cargo run --manifest-path v1/conformance/Cargo.toml -- path/to/produced-game
 | [`protocol/2000m.json.schema.json`](protocol/2000m.json.schema.json) | Manifest checkpoint for produced-game launch metadata. |
 | [`conformance/`](conformance/) | v0 judge/scorer with 16 mechanical ACs. |
 | [`v1/`](v1/) | v1 protocol, 28-AC spec, quality-scored conformance suite, and weak v1 stub smoke. |
+| [`v2/`](v2/) | Design draft for a workflow-resilience track; no v2 scorer or harness yet. |
 | [`stub-driver/`](stub-driver/) | Smoke-test skier that shows the v0 harness path works while failing most ACs. |
 | [`results/README.md`](results/README.md) | Scorecard format for benchmark rows. |
 | [`results/leaderboard.md`](results/leaderboard.md) | Rendered mechanical scoreboard. |
