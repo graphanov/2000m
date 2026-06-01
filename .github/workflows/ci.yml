@@ -49,17 +49,29 @@ jobs:
 
       - name: Validate v2 calibration result spine
         run: |
-          cargo run --quiet -p m2000-v2-conformance -- \
-            v2/examples/workflow-resilience-pilot.scenario.json \
-            v2/examples/pilot-good-run-record.json \
-            --json-out /tmp/2000m-v2-good.json
+          tmpdir="$(mktemp -d)"
+          for name in good weak-ranked missing-output private-path wrong-stop; do
+            cargo run --quiet -p m2000-v2-conformance -- \
+              v2/examples/workflow-resilience-pilot.scenario.json \
+              v2/examples/pilot-${name}-run-record.json \
+              --json-out "$tmpdir/pilot-${name}-result.json"
+            diff -u \
+              "v2/examples/results/pilot-${name}-result.json" \
+              "$tmpdir/pilot-${name}-result.json"
+          done
           python3 - <<'PY'
           import json
-          d = json.load(open('/tmp/2000m-v2-good.json'))
-          assert d['ranked'] is True
-          assert d['compositeScore'] == 80.0
-          assert d['components']['artifactQuality']['score'] == 50.0
-          assert d['components']['stopCondition']['score'] == 100.0
-          print('OK: v2 pilot good fixture ranked with separated artifact/workflow components')
+          expected = {
+              'good': (True, 80.0),
+              'weak-ranked': (True, 72.0),
+              'wrong-stop': (True, 65.0),
+              'missing-output': (False, 65.0),
+              'private-path': (False, 50.0),
+          }
+          for name, (ranked, composite) in expected.items():
+              d = json.load(open(f'v2/examples/results/pilot-{name}-result.json'))
+              assert d['ranked'] is ranked, (name, d['ranked'])
+              assert d['compositeScore'] == composite, (name, d['compositeScore'])
+          print('OK: all v2 pilot result fixtures match scorer output and expected rank/composite')
           PY
           python3 scripts/render_results.py --check
