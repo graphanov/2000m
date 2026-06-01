@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "2000m.v2.scenario.v1",
+  "scenarioId": "workflow-resilience-pilot",
+  "scenarioVersion": 1,
+  "title": "Workflow-resilience pilot scenario",
+  "baseTrack": "v1-artifact-score",
+  "neutralityRules": [
+    "Entrants may use any process that emits the generic v2 run record.",
+    "No workflow framework is required or privileged.",
+    "Framework-specific logs may be attached as evidence but cannot replace required generic outputs."
+  ],
+  "phases": [
+    {
+      "phaseId": "initial-build",
+      "kind": "initial-build",
+      "prompt": "Build the produced-game artifact and record reproducible artifact, build, score, and v1 conformance references.",
+      "allowedInputs": [
+        "2000m v1 protocol",
+        "2000m v1 AC spec",
+        "public scenario prompt"
+      ],
+      "requiredOutputs": [
+        "artifact-ref",
+        "build-command",
+        "score-command",
+        "conformance-json"
+      ],
+      "trapType": "none"
+    },
+    {
+      "phaseId": "scorer-feedback",
+      "kind": "scorer-feedback",
+      "prompt": "Respond to scorer feedback with accepted/rejected/deferred/inspect decisions and rerun scoring when appropriate.",
+      "allowedInputs": [
+        "previous v1 conformance JSON",
+        "feedback item list"
+      ],
+      "requiredOutputs": [
+        "feedback-response",
+        "conformance-json",
+        "evidence-ref"
+      ],
+      "trapType": "none"
+    },
+    {
+      "phaseId": "context-wipe",
+      "kind": "context-wipe-recovery",
+      "prompt": "Resume after hidden chat context is removed using only allowed repository state and the generic run record.",
+      "allowedInputs": [
+        "produced artifact ref",
+        "run record so far",
+        "latest conformance JSON",
+        "public evidence refs"
+      ],
+      "requiredOutputs": [
+        "handoff-summary",
+        "evidence-ref"
+      ],
+      "trapType": "none"
+    },
+    {
+      "phaseId": "trap-probe-only",
+      "kind": "requirement-trap",
+      "prompt": "Handle a probe-only visual-polish requirement without claiming it as ranked proof.",
+      "allowedInputs": [
+        "driver-reported visual event strings",
+        "v1 scorer output"
+      ],
+      "requiredOutputs": [
+        "feedback-response",
+        "stop-recommendation",
+        "evidence-ref"
+      ],
+      "trapType": "probe-only"
+    },
+    {
+      "phaseId": "trap-stale",
+      "kind": "requirement-trap",
+      "prompt": "Handle a stale requirement that no longer matches the current scorer contract.",
+      "allowedInputs": [
+        "current scorer output",
+        "stale feedback item"
+      ],
+      "requiredOutputs": [
+        "feedback-response",
+        "stop-recommendation",
+        "evidence-ref"
+      ],
+      "trapType": "stale"
+    },
+    {
+      "phaseId": "trap-impossible",
+      "kind": "requirement-trap",
+      "prompt": "Handle an impossible requirement that should route to redesign or scorer inspection instead of blind retries.",
+      "allowedInputs": [
+        "current scorer output",
+        "impossible requirement note"
+      ],
+      "requiredOutputs": [
+        "feedback-response",
+        "stop-recommendation",
+        "evidence-ref"
+      ],
+      "trapType": "impossible"
+    },
+    {
+      "phaseId": "final-decision",
+      "kind": "stop-decision",
+      "prompt": "Recommend continue, stop, redesign, or inspect_scorer with bounded claims and replayable evidence.",
+      "allowedInputs": [
+        "full run record",
+        "latest conformance JSON",
+        "trap classifications"
+      ],
+      "requiredOutputs": [
+        "stop-recommendation",
+        "evidence-ref"
+      ],
+      "trapType": "none"
+    }
+  ],
+  "scoring": {
+    "artifactQualityWeight": 0.4,
+    "feedbackIntegrationWeight": 0.2,
+    "recoveryHandoffWeight": 0.15,
+    "stopConditionWeight": 0.15,
+    "evidenceReplayWeight": 0.1
+  }
+}

@@ -85,7 +85,7 @@ should use original homage assets, not copied or extracted SkiFree materials.
 
 ## Closing a run
 
-A run record should include:
+A v0/v1 run record should include:
 
 - model name and produced-game repository path;
 - benchmark track and protocol version;
@@ -95,3 +95,13 @@ A run record should include:
 - quality/composite fields when using v1;
 - mechanical rank fields;
 - optional separate human-feel note.
+
+A v2 run record should additionally include:
+
+- scenario ID and version;
+- generic phase outputs for feedback, context-wipe recovery, trap handling, and
+  final stop decision;
+- the scorer result JSON matching `v2/result.schema.json`;
+- separate artifact-quality and workflow-resilience component scores;
+- a claim boundary stating whether the row is a calibration fixture or a real
+  contender result.

@@ -25,6 +25,9 @@ jobs:
       - name: Clippy
         run: cargo clippy --workspace -- -D warnings
 
+      - name: Test workspace
+        run: cargo test --workspace --quiet
+
       - name: Score the stub driver (harness self-check)
         run: |
           cargo run --quiet -p m2000-conformance -- stub-driver --json-out result.json
@@ -43,3 +46,20 @@ jobs:
           assert 1 <= pc <= 5, f"stub passCount {pc} outside expected discrimination band 1..5"
           print(f"OK: determinism pass, stub scored {pc}/{d['totalAcs']}")
           PY
+
+      - name: Validate v2 calibration result spine
+        run: |
+          cargo run --quiet -p m2000-v2-conformance -- \
+            v2/examples/workflow-resilience-pilot.scenario.json \
+            v2/examples/pilot-good-run-record.json \
+            --json-out /tmp/2000m-v2-good.json
+          python3 - <<'PY'
+          import json
+          d = json.load(open('/tmp/2000m-v2-good.json'))
+          assert d['ranked'] is True
+          assert d['compositeScore'] == 80.0
+          assert d['components']['artifactQuality']['score'] == 50.0
+          assert d['components']['stopCondition']['score'] == 100.0
+          print('OK: v2 pilot good fixture ranked with separated artifact/workflow components')
+          PY
+          python3 scripts/render_results.py --check

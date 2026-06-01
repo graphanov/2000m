@@ -1,20 +1,63 @@
 {
-  "schemaVersion": "2000m.results.v0",
-  "rankingRule": "Sort by finalPassCount desc, then generationsToPlayable asc, then generationsToYeti asc, then fewer generations used. Human feel is never used for rank.",
+  "schemaVersion": "2000m.results.v1",
+  "v0RankingRule": "Sort by finalPassCount desc, then generationsToPlayable asc, then generationsToYeti asc, then fewer generations used. Human feel is never used for rank.",
+  "v2RankingRule": "V2 rows are scenario-scoped workflow-resilience results. Keep artifact-quality and workflow components separate; v2 scores are not comparable to v0/v1 mechanical scores and are not general model rankings.",
   "rows": [
     {
       "rank": 1,
       "model": "placeholder-model",
       "producedRepo": "graphanov/2000m-placeholder-model",
       "generationCap": 8,
-      "trajectory": [2, 4, 7, 9],
+      "trajectory": [
+        2,
+        4,
+        7,
+        9
+      ],
       "finalPassCount": 9,
       "totalAcs": 16,
       "generationsToPlayable": 3,
       "generationsToYeti": null,
       "monotonic": true,
-      "humanFeelOperatorTasteNotScore": "not evaluated — placeholder row",
+      "humanFeelOperatorTasteNotScore": "not evaluated \u2014 placeholder row",
       "evidence": "results/example-placeholder-final.json"
+    }
+  ],
+  "v2Rows": [
+    {
+      "track": "v2-workflow-resilience",
+      "scenario": "v2/examples/workflow-resilience-pilot.scenario.json",
+      "runRecord": "v2/examples/pilot-good-run-record.json",
+      "resultJson": "v2/examples/results/pilot-good-result.json",
+      "claimBoundary": "calibration fixture, not a contender result"
+    },
+    {
+      "track": "v2-workflow-resilience",
+      "scenario": "v2/examples/workflow-resilience-pilot.scenario.json",
+      "runRecord": "v2/examples/pilot-weak-ranked-run-record.json",
+      "resultJson": "v2/examples/results/pilot-weak-ranked-result.json",
+      "claimBoundary": "calibration fixture, ranked but intentionally weak"
+    },
+    {
+      "track": "v2-workflow-resilience",
+      "scenario": "v2/examples/workflow-resilience-pilot.scenario.json",
+      "runRecord": "v2/examples/pilot-wrong-stop-run-record.json",
+      "resultJson": "v2/examples/results/pilot-wrong-stop-result.json",
+      "claimBoundary": "calibration fixture with wrong stop decision"
+    },
+    {
+      "track": "v2-workflow-resilience",
+      "scenario": "v2/examples/workflow-resilience-pilot.scenario.json",
+      "runRecord": "v2/examples/pilot-missing-output-run-record.json",
+      "resultJson": "v2/examples/results/pilot-missing-output-result.json",
+      "claimBoundary": "rank-block fixture: missing required output"
+    },
+    {
+      "track": "v2-workflow-resilience",
+      "scenario": "v2/examples/workflow-resilience-pilot.scenario.json",
+      "runRecord": "v2/examples/pilot-private-path-run-record.json",
+      "resultJson": "v2/examples/results/pilot-private-path-result.json",
+      "claimBoundary": "rank-block fixture: private/local scorer input"
     }
   ]
 }

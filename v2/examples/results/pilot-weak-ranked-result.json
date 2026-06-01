@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "2000m.v2.result.v1",
+  "scenarioId": "workflow-resilience-pilot",
+  "scenarioVersion": 1,
+  "entrant": "calibration-weak-ranked-record",
+  "processType": "scripted-agent-loop",
+  "ranked": true,
+  "compositeScore": 72.0,
+  "components": {
+    "artifactQuality": {
+      "score": 50.0,
+      "detail": "from verified v1 conformance result"
+    },
+    "feedbackIntegration": {
+      "score": 100.0,
+      "detail": "4/4 feedback phases covered"
+    },
+    "recoveryHandoff": {
+      "score": 100.0,
+      "detail": "1/1 recovery phases covered"
+    },
+    "stopCondition": {
+      "score": 60.0,
+      "detail": "stops, but trap phases usually require inspection/redesign"
+    },
+    "evidenceReplay": {
+      "score": 80.0,
+      "detail": "build, score, commit, and evidence replayability checks"
+    }
+  },
+  "warnings": [
+    "some evidence refs lack a kind label"
+  ]
+}
