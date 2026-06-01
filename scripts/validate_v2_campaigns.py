@@ -52,6 +52,10 @@ def require(condition: bool, message: str) -> None:
         raise CampaignError(message)
 
 
+def is_plain_int(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
+
+
 def require_string(obj: dict[str, Any], key: str) -> str:
     value = obj.get(key)
     require(isinstance(value, str) and bool(value.strip()), f"`{key}` must be a non-empty string")
@@ -132,7 +136,7 @@ def validate_lanes(campaign: dict[str, Any]) -> None:
         require(pair_id not in seen_pair_ids, f"duplicate pairId `{pair_id}`")
         seen_pair_ids.add(pair_id)
         task_seed = pair.get("taskSeed")
-        require(isinstance(task_seed, int), f"pair {pair_id} taskSeed must be integer")
+        require(is_plain_int(task_seed), f"pair {pair_id} taskSeed must be integer")
         require(task_seed not in seen_task_seeds, f"duplicate taskSeed `{task_seed}` would inflate paired campaign size")
         seen_task_seeds.add(task_seed)
         pair_lanes = pair.get("enabledLanes")
@@ -145,11 +149,14 @@ def validate_lanes(campaign: dict[str, Any]) -> None:
 
 def validate_controls(campaign: dict[str, Any]) -> None:
     controls = campaign["controls"]
-    require(controls.get("generationCap", 0) >= 1, "generationCap must be >= 1")
+    generation_cap = controls.get("generationCap")
+    scorer_budget = controls.get("scorerFeedbackBudget")
+    reviewer_budget = controls.get("reviewerFeedbackBudget")
+    require(is_plain_int(generation_cap) and generation_cap >= 1, "generationCap must be integer >= 1")
     require(controls.get("samePromptBudget") is True, "samePromptBudget must be true")
     require(controls.get("sameFeedbackPackets") is True, "sameFeedbackPackets must be true")
-    require(controls.get("scorerFeedbackBudget", -1) >= 0, "scorerFeedbackBudget must be >= 0")
-    require(controls.get("reviewerFeedbackBudget", -1) >= 0, "reviewerFeedbackBudget must be >= 0")
+    require(is_plain_int(scorer_budget) and scorer_budget >= 0, "scorerFeedbackBudget must be integer >= 0")
+    require(is_plain_int(reviewer_budget) and reviewer_budget >= 0, "reviewerFeedbackBudget must be integer >= 0")
 
 
 def validate_freeze_and_claims(campaign: dict[str, Any]) -> None:
@@ -175,6 +182,7 @@ def validate_visual_track(campaign: dict[str, Any]) -> None:
     require(visual.get("enabled") is True, "visualTrack.enabled must be true for paired pilot")
     seeds = visual.get("fixedSeeds")
     require(isinstance(seeds, list) and len(seeds) >= 1, "visualTrack.fixedSeeds must be non-empty")
+    require(all(is_plain_int(seed) for seed in seeds), "visualTrack.fixedSeeds must contain integers, not booleans")
     require(len(seeds) == len(set(seeds)), "visualTrack.fixedSeeds must be unique")
     raw_artifacts = visual.get("requiredArtifacts")
     require(isinstance(raw_artifacts, list), "visualTrack.requiredArtifacts must be list")
