@@ -503,6 +503,14 @@ fn score_artifact_quality(
         return component(0.0, "missing v1 conformance JSON");
     };
 
+    if looks_private_or_local(ref_path) {
+        warnings.push(format!(
+            "RANK-BLOCK: artifact v1ConformanceJson `{}` is private or local-only before read",
+            ref_path
+        ));
+        return component(0.0, "private/local v1 conformance JSON");
+    }
+
     let path = resolve_ref(run_record_path, ref_path);
     let Ok(text) = fs::read_to_string(&path) else {
         warnings.push(format!(
@@ -519,7 +527,7 @@ fn score_artifact_quality(
         return component(0.0, "invalid v1 conformance JSON");
     };
 
-    let Some(score) = verified_v1_conformance_score(ref_path, &json, warnings) else {
+    let Some(score) = verified_v1_conformance_score(ref_path, &json, run, warnings) else {
         return component(0.0, "invalid v1 conformance result");
     };
     component(score, "from verified v1 conformance result")
@@ -528,10 +536,32 @@ fn score_artifact_quality(
 fn verified_v1_conformance_score(
     ref_path: &str,
     json: &Value,
+    run: &RunRecord,
     warnings: &mut Vec<String>,
 ) -> Option<f64> {
     if json.get("protocolVersion").and_then(Value::as_str) != Some("2000m.driver.v1") {
         rank_block_v1(ref_path, "missing or wrong protocolVersion", warnings);
+        return None;
+    }
+
+    let Some(game_dir) = json.get("gameDir").and_then(Value::as_str) else {
+        rank_block_v1(ref_path, "missing gameDir", warnings);
+        return None;
+    };
+    if game_dir.trim().is_empty() {
+        rank_block_v1(ref_path, "empty gameDir", warnings);
+        return None;
+    }
+    if looks_private_or_local(game_dir) {
+        rank_block_v1(ref_path, "gameDir is private or local-only", warnings);
+        return None;
+    }
+    if game_dir != run.artifact.repo_or_path {
+        rank_block_v1(
+            ref_path,
+            "gameDir does not match artifact.repoOrPath",
+            warnings,
+        );
         return None;
     }
 
@@ -1245,9 +1275,38 @@ mod tests {
         let result = score_run(&scenario, &run, &run_file).expect("score run");
         assert!(!result.ranked);
         assert!(result.warnings.iter().any(|warning| {
-            warning.contains("private or local-only evidence ref")
-                && warning.contains("/Users/private/v1.json")
+            warning.contains("private or local-only") && warning.contains("/Users/private/v1.json")
         }));
+    }
+
+    #[test]
+    fn special_v1_conformance_path_is_rejected_before_reading() {
+        let run_file = env::temp_dir().join("run-record.json");
+        let scenario = base_scenario();
+        let run = base_run("/dev/zero".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result.warnings.iter().any(|warning| {
+            warning.starts_with("RANK-BLOCK:") && warning.contains("before read")
+        }));
+    }
+
+    #[test]
+    fn mismatched_v1_game_dir_blocks_public_ranking() {
+        let mut fake = v1_result(50.0);
+        fake["gameDir"] = json!("https://github.com/example/other-entry");
+        let (_dir, conformance_path) = write_temp_json("v1.json", fake);
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let run = base_run("v1.json".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result
+            .warnings
+            .iter()
+            .any(|warning| { warning.starts_with("RANK-BLOCK:") && warning.contains("gameDir") }));
     }
 
     #[test]
