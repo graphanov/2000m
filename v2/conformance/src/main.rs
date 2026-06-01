@@ -946,10 +946,7 @@ fn looks_private_or_local(value: &str) -> bool {
 
 fn has_windows_drive_prefix(lower: &str) -> bool {
     let bytes = lower.as_bytes();
-    bytes.len() >= 3
-        && bytes[0].is_ascii_lowercase()
-        && bytes[1] == b':'
-        && (bytes[2] == b'\\' || bytes[2] == b'/')
+    bytes.len() >= 2 && bytes[0].is_ascii_lowercase() && bytes[1] == b':'
 }
 
 fn component(score: f64, detail: impl Into<String>) -> ComponentScore {
@@ -1321,6 +1318,8 @@ mod tests {
     fn windows_absolute_and_unc_paths_are_private_or_local() {
         assert!(looks_private_or_local(r"D:\tmp\2000m-entry"));
         assert!(looks_private_or_local(r"E:/tmp/2000m-entry"));
+        assert!(looks_private_or_local(r"C:Users\alice\run.json"));
+        assert!(looks_private_or_local(r"D:tmp\v1.json"));
         assert!(looks_private_or_local(r"\\server\share\2000m-entry"));
     }
 
