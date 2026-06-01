@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "2000m.v2.run-record.v1",
+  "scenarioId": "workflow-resilience-smoke",
+  "scenarioVersion": 1,
+  "entrant": {
+    "label": "weak-sample",
+    "processType": "scripted-agent-loop",
+    "notes": "Fixture for scorer smoke tests; not a real contender result."
+  },
+  "artifact": {
+    "repoOrPath": "https://github.com/example/2000m-weak-entry",
+    "commitOrDigest": "0000000-sample",
+    "buildCommand": "cargo build --locked",
+    "scoreCommand": "cargo run --manifest-path v1/conformance/Cargo.toml -- https://github.com/example/2000m-weak-entry --json-out v1-conformance.json",
+    "v1ConformanceJson": "v1-conformance-sample.json"
+  },
+  "phases": [
+    {
+      "phaseId": "build",
+      "outputs": {
+        "artifact-ref": "https://github.com/example/2000m-weak-entry",
+        "build-command": "cargo build --locked",
+        "score-command": "cargo run --manifest-path v1/conformance/Cargo.toml -- https://github.com/example/2000m-weak-entry",
+        "conformance-json": "v1-conformance-sample.json"
+      }
+    },
+    {
+      "phaseId": "feedback",
+      "outputs": {
+        "evidence-ref": "https://example.invalid/feedback.md"
+      },
+      "feedbackResponses": [
+        {
+          "feedbackId": "review-001",
+          "decision": "accepted",
+          "rationale": "The scorer reported weak artifact quality and the next attempt should address failing ACs before public claims.",
+          "evidenceRef": "https://example.invalid/feedback.md"
+        }
+      ]
+    },
+    {
+      "phaseId": "wipe",
+      "outputs": {
+        "handoff-summary": "The artifact scored 50 composite on the sample v1 conformance file; next action is inspect the probe-only trap before claiming visual quality.",
+        "stop-recommendation": "inspect_scorer"
+      }
+    },
+    {
+      "phaseId": "probe-trap",
+      "outputs": {
+        "stop-recommendation": "inspect_scorer",
+        "evidence-ref": "https://example.invalid/probe-note.md"
+      }
+    }
+  ],
+  "finalRecommendation": {
+    "decision": "inspect_scorer",
+    "rationale": "The scenario includes a probe-only visual-polish trap, so the entrant should inspect scorer semantics before making ranked visual-quality claims."
+  },
+  "evidence": [
+    {
+      "label": "sample v1 conformance",
+      "ref": "https://example.invalid/v1-conformance-sample.json",
+      "kind": "conformance-json"
+    },
+    {
+      "label": "sample feedback note",
+      "ref": "https://example.invalid/feedback.md",
+      "kind": "summary"
+    }
+  ]
+}

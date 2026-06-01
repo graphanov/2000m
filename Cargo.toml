@@ -7,4 +7,5 @@ resolver = "2"
 members = [
     "conformance",
     "stub-driver",
+    "v2/conformance",
 ]

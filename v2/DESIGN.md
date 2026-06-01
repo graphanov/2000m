@@ -2,7 +2,7 @@
 
 ## Status
 
-Design draft. This document defines the intended benchmark-v2 contract before implementation. It does not ship a scorer, does not launch models, and does not claim that any entrant wins.
+Initial implementation. This document defines the benchmark-v2 contract and the first scorer/harness implementation. It does not launch models and does not claim that any entrant wins.
 
 ## Why v2 exists
 
@@ -168,14 +168,23 @@ Not allowed:
 - "This v2 workflow score is directly comparable to v0/v1 mechanical score."
 - "Probe-only or driver-reported evidence proves visual quality or portable performance by itself."
 
-## Implementation plan after this design slice
+## Implementation status
 
-1. Add v2 Rust crate or module for schema loading and run-record validation.
-2. Add a public starter scenario and one deliberately incomplete sample run record.
-3. Add scoring functions for the five v2 components with unit tests.
-4. Reuse v1 artifact scorer output as the first artifact-quality input.
-5. Add CLI command to score a v2 run record against a scenario.
-6. Add CI smoke that validates schemas and proves the sample record does not get a perfect score.
+Implemented in the first scorer/harness slice:
+
+1. v2 Rust crate for scenario loading, run-record loading, and scoring.
+2. Public starter scenario and weak sample run record.
+3. Scoring functions for the five v2 components with unit tests.
+4. v1 conformance JSON as the first artifact-quality input.
+5. CLI command to score a v2 run record against a scenario.
+6. CI-capable smoke that validates the weak sample scores below ceiling.
+
+Still future work:
+
+- hidden/private scenario variants;
+- model/runtime launcher integration, if ever needed;
+- richer reviewer packet fixtures;
+- results leaderboard rendering for v2 rows.
 
 ## Acceptance criteria for the first implementation slice
 
