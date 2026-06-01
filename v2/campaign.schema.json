@@ -173,7 +173,7 @@
         "enabled": { "type": "boolean" },
         "controllerStatus": {
           "type": "string",
-          "enum": ["not-implemented", "implemented", "not-applicable"]
+          "enum": ["not-implemented", "not-applicable"]
         },
         "allowedTools": {
           "type": "array",

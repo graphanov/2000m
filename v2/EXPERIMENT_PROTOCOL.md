@@ -96,7 +96,7 @@ Purpose: test a stronger claim only if a real bounded controller exists.
 
 Default: disabled.
 
-Lane C may only be enabled after the controller is implemented and reviewed. If disabled, the campaign must not imply that a controller existed or contributed to results.
+Lane C may only be enabled after the controller is implemented and reviewed. If disabled, the campaign must not imply that a controller existed or contributed to results. Campaign schema v1 keeps Lane C disabled; a future controller campaign must update the schema and validator with immutable implementation/evidence refs.
 
 ## Controlled conditions
 

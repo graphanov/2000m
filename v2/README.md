@@ -78,8 +78,9 @@ Validate campaign files with:
 python3 scripts/validate_v2_campaigns.py
 ```
 
-Lane C is disabled until a real controller exists. Do not treat the current Open
-Scaffold ledger/analyze lane as a controller lane.
+Lane C is disabled in campaign schema v1 until a real controller exists and the
+schema/validator grow immutable controller implementation/evidence refs. Do not
+treat the current Open Scaffold ledger/analyze lane as a controller lane.
 
 ## Boundary
 

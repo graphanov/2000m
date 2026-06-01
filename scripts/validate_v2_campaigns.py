@@ -30,6 +30,7 @@ BANNED_CLAIM_MARKERS = [
     "v1 result proves framework superiority",
     "workflow score equals model ranking",
     "adoption proof",
+    "calibration fixtures are public contender results",
 ]
 
 
@@ -111,8 +112,8 @@ def validate_lanes(campaign: dict[str, Any]) -> None:
     if "C" in by_id:
         lane_c = by_id["C"]
         require(lane_c["role"] == "controller", "Lane C must use controller role")
-        if lane_c.get("controllerStatus") != "implemented":
-            require(lane_c["enabled"] is False, "Lane C cannot be enabled unless controllerStatus is implemented")
+        require(lane_c["enabled"] is False, "Lane C is disabled in campaign schema v1 until a reviewed controller implementation and evidence-ref field exist")
+        require(lane_c.get("controllerStatus") == "not-implemented", "Lane C controllerStatus must remain not-implemented in campaign schema v1")
 
     lane_a_forbidden = " ".join(by_id["A"].get("forbiddenAdvantages", [])).lower()
     require("open scaffold" in lane_a_forbidden or ".osc" in lane_a_forbidden, "Lane A must explicitly forbid Open Scaffold state/tools")
