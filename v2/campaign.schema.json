@@ -235,7 +235,13 @@
         "enabledLanes": {
           "type": "array",
           "minItems": 2,
-          "items": { "type": "string", "enum": ["A", "B", "C"] }
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["A", "B"] },
+          "allOf": [
+            { "contains": { "const": "A" } },
+            { "contains": { "const": "B" } }
+          ]
         },
         "notes": { "type": "string" }
       }
