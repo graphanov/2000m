@@ -557,6 +557,14 @@ fn verified_v1_conformance_score(
         rank_block_v1(ref_path, "invalid passCount/totalAcs", warnings);
         return None;
     }
+    if total_acs != 28 {
+        rank_block_v1(
+            ref_path,
+            "totalAcs is not the canonical v1 28-AC set",
+            warnings,
+        );
+        return None;
+    }
 
     let Some(composite_score) = json.get("compositeScore").and_then(Value::as_f64) else {
         rank_block_v1(ref_path, "missing numeric compositeScore", warnings);
@@ -578,10 +586,8 @@ fn verified_v1_conformance_score(
     let mut computed_pass_count = 0_u64;
     let mut quality_sum = 0.0;
     for (index, ac) in acs.iter().enumerate() {
-        let id_missing = ac
-            .get("id")
-            .and_then(Value::as_str)
-            .is_none_or(str::is_empty);
+        let id = ac.get("id").and_then(Value::as_str);
+        let id_missing = id.is_none_or(str::is_empty);
         let pass = ac.get("pass").and_then(Value::as_bool);
         let skipped = ac.get("skipped").and_then(Value::as_bool);
         let quality = ac.get("quality").and_then(Value::as_u64);
@@ -601,6 +607,15 @@ fn verified_v1_conformance_score(
         let pass = pass.expect("validated pass field");
         let skipped = skipped.expect("validated skipped field");
         let quality = quality.expect("validated quality field");
+        let expected_id = format!("AC{}", index + 1);
+        if id != Some(expected_id.as_str()) {
+            rank_block_v1(
+                ref_path,
+                &format!("acs[{}] id is not canonical {}", index, expected_id),
+                warnings,
+            );
+            return None;
+        }
         if quality > 100 {
             rank_block_v1(
                 ref_path,
@@ -1150,6 +1165,32 @@ mod tests {
         assert_eq!(result.components.artifact_quality.score, 0.0);
         assert!(result.warnings.iter().any(|warning| {
             warning.starts_with("RANK-BLOCK:") && warning.contains("compositeScore")
+        }));
+    }
+
+    #[test]
+    fn noncanonical_v1_ac_set_blocks_public_ranking() {
+        let mut fake = v1_result(100.0);
+        fake["totalAcs"] = json!(1);
+        fake["passCount"] = json!(1);
+        fake["acs"] = json!([{
+            "id": "AC1",
+            "name": "Acceptance criterion 1",
+            "pass": true,
+            "skipped": false,
+            "quality": 100,
+            "detail": "too small",
+            "breakdown": { "basic": 100, "precision": 100, "performance": 100, "polish": 100 }
+        }]);
+        let (_dir, conformance_path) = write_temp_json("v1.json", fake);
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let run = base_run("v1.json".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result.warnings.iter().any(|warning| {
+            warning.starts_with("RANK-BLOCK:") && warning.contains("canonical v1 28-AC set")
         }));
     }
 
