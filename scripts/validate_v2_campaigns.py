@@ -96,8 +96,11 @@ def validate_lanes(campaign: dict[str, Any]) -> None:
     by_id: dict[str, dict[str, Any]] = {}
     for lane in lanes:
         lane_id = require_string(lane, "laneId")
+        require(lane_id in {"A", "B", "C"}, f"unsupported laneId `{lane_id}` in campaign schema v1")
         require(lane_id not in by_id, f"duplicate laneId `{lane_id}`")
         by_id[lane_id] = lane
+        require(lane.get("role") in {"naked-model-baseline", "open-scaffold-ledger-analyze", "controller"}, f"lane {lane_id} has unsupported role")
+        require(lane.get("controllerStatus") in {"not-implemented", "not-applicable"}, f"lane {lane_id} has unsupported controllerStatus")
         require(isinstance(lane.get("enabled"), bool), f"lane {lane_id} enabled must be bool")
         require(isinstance(lane.get("allowedTools"), list), f"lane {lane_id} allowedTools must be list")
         require(isinstance(lane.get("forbiddenAdvantages"), list), f"lane {lane_id} forbiddenAdvantages must be list")
