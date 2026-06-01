@@ -38,9 +38,11 @@ probe-only signals clearly labeled.
 The v2 scorer/harness, under [`v2/`](v2/), keeps the benchmark independent while
 adding a workflow-resilience track around interruption recovery, feedback use,
 stop-condition correctness, and replayable evidence. It consumes generic
-scenario and run-record contracts, emits a machine-readable result contract, and
-does not privilege any workflow framework. The current v2 rows are calibration
-fixtures, not contender results.
+scenario, run-record, result, and paired-campaign contracts, emits
+machine-readable result records, and does not privilege any workflow framework.
+The current v2 rows are calibration fixtures, not contender results; live paired
+campaigns must follow the frozen protocol before supporting any workflow-value
+claim.
 
 One protocol `step` is one deterministic logic tick. The stable scorecard keeps
 manual play, networking, random OS state, and human visual taste out of

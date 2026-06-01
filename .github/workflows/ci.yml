@@ -75,3 +75,6 @@ jobs:
           print('OK: all v2 pilot result fixtures match scorer output and expected rank/composite')
           PY
           python3 scripts/render_results.py --check
+
+      - name: Validate v2 paired campaign protocol
+        run: python3 scripts/validate_v2_campaigns.py

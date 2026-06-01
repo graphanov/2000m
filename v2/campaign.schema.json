@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v2/campaign.schema.json",
+  "title": "2000m v2 paired campaign",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "title",
+    "status",
+    "hypothesis",
+    "freezeRules",
+    "controls",
+    "lanes",
+    "pairs",
+    "visualTrack",
+    "decisionRules",
+    "bannedClaims"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2000m.v2.campaign.v1" },
+    "campaignId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "frozen", "calibration", "pilot", "complete"]
+    },
+    "hypothesis": { "type": "string", "minLength": 1 },
+    "freezeRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "freezeBeforeLiveResults",
+        "noScorerMutationAfterLiveResults",
+        "calibrationMutationPolicy",
+        "frozenRefs"
+      ],
+      "properties": {
+        "freezeBeforeLiveResults": { "type": "boolean" },
+        "noScorerMutationAfterLiveResults": { "type": "boolean" },
+        "calibrationMutationPolicy": { "type": "string", "minLength": 1 },
+        "frozenRefs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scenario", "scorer", "visualTrack", "decisionRules"],
+          "properties": {
+            "scenario": { "type": "string", "minLength": 1 },
+            "scorer": { "type": "string", "minLength": 1 },
+            "visualTrack": { "type": "string", "minLength": 1 },
+            "decisionRules": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "runtime",
+        "generationCap",
+        "scorerFeedbackBudget",
+        "reviewerFeedbackBudget",
+        "contextWipePhase",
+        "samePromptBudget",
+        "sameFeedbackPackets",
+        "wallClockPolicy"
+      ],
+      "properties": {
+        "model": { "type": "string", "minLength": 1 },
+        "runtime": { "type": "string", "minLength": 1 },
+        "generationCap": { "type": "integer", "minimum": 1 },
+        "scorerFeedbackBudget": { "type": "integer", "minimum": 0 },
+        "reviewerFeedbackBudget": { "type": "integer", "minimum": 0 },
+        "contextWipePhase": { "type": "string", "minLength": 1 },
+        "samePromptBudget": { "type": "boolean" },
+        "sameFeedbackPackets": { "type": "boolean" },
+        "wallClockPolicy": {
+          "type": "string",
+          "enum": ["diagnostic-only", "controlled-budget", "not-used"]
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/lane" }
+    },
+    "pairs": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/pair" }
+    },
+    "visualTrack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "specRef",
+        "fixedSeeds",
+        "requiredArtifacts",
+        "captureWindows",
+        "rubricRef",
+        "blindReview"
+      ],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "specRef": { "type": "string", "minLength": 1 },
+        "fixedSeeds": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "integer" }
+        },
+        "requiredArtifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": ["screenshot", "gif", "replay-log", "frame-metadata", "rubric-record", "blind-label-map"]
+          }
+        },
+        "captureWindows": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rubricRef": { "type": "string", "minLength": 1 },
+        "blindReview": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["anonymized", "mappingSealedBeforeReview", "ownerTasteIsNotMechanicalScore"],
+          "properties": {
+            "anonymized": { "type": "boolean" },
+            "mappingSealedBeforeReview": { "type": "boolean" },
+            "ownerTasteIsNotMechanicalScore": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "decisionRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["predeclared", "noSupport", "directionalSignal", "repeatableSupport"],
+      "properties": {
+        "predeclared": { "type": "boolean" },
+        "noSupport": { "type": "string", "minLength": 1 },
+        "directionalSignal": { "type": "string", "minLength": 1 },
+        "repeatableSupport": { "type": "string", "minLength": 1 }
+      }
+    },
+    "bannedClaims": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["laneId", "label", "role", "enabled", "allowedTools", "forbiddenAdvantages", "requiredEvidence"],
+      "properties": {
+        "laneId": { "type": "string", "enum": ["A", "B", "C"] },
+        "label": { "type": "string", "minLength": 1 },
+        "role": {
+          "type": "string",
+          "enum": ["naked-model-baseline", "open-scaffold-ledger-analyze", "controller"]
+        },
+        "enabled": { "type": "boolean" },
+        "controllerStatus": {
+          "type": "string",
+          "enum": ["not-implemented", "implemented", "not-applicable"]
+        },
+        "allowedTools": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "forbiddenAdvantages": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "requiredEvidence": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pairId", "taskSeed", "scenario", "enabledLanes", "notes"],
+      "properties": {
+        "pairId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+        },
+        "taskSeed": { "type": "integer" },
+        "scenario": { "type": "string", "minLength": 1 },
+        "enabledLanes": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "enum": ["A", "B", "C"] }
+        },
+        "notes": { "type": "string" }
+      }
+    }
+  }
+}

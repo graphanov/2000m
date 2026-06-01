@@ -9,9 +9,12 @@ v2 exists because v0 and v1 mostly measure the final produced game. They are use
 ## Files
 
 - [`DESIGN.md`](DESIGN.md) — design brief, neutrality rules, scenario phases, scoring model, and implementation plan.
+- [`EXPERIMENT_PROTOCOL.md`](EXPERIMENT_PROTOCOL.md) — frozen paired-campaign protocol, lane definitions, controls, freeze rules, and claim ladder.
+- [`VISUAL_ARTIFACT_TRACK.md`](VISUAL_ARTIFACT_TRACK.md) — screenshot/GIF/replay, fixed-seed, rubric, blind-review, and visual-feature requirements.
 - [`scenario.schema.json`](scenario.schema.json) — draft machine-readable scenario contract for v2 fixtures.
 - [`run-record.schema.json`](run-record.schema.json) — draft entrant-submitted run record contract for v2 scoring.
 - [`result.schema.json`](result.schema.json) — machine-readable scorer result contract for rendered result rows.
+- [`campaign.schema.json`](campaign.schema.json) — machine-readable paired-campaign contract for controlled pilots.
 - [`conformance/`](conformance/) — first v2 scorer/harness crate.
 - [`examples/`](examples/) — public smoke scenario, pilot scenario, golden run-record fixtures, sample v1 conformance input, and generated scorer-result fixtures.
 
@@ -52,6 +55,31 @@ python3 scripts/render_results.py --check
 
 Those rows exercise the result spine. They are calibration fixtures only, not a
 public model/workflow leaderboard.
+
+## Paired campaign protocol
+
+The next step after calibration is a frozen paired campaign, not a single public
+rerun. The protocol is:
+
+1. freeze the scenario, scorer, campaign config, visual capture plan, and
+   decision rules before inspecting live results;
+2. run neutral smokes/calibration;
+3. run paired Lane A / Lane B private pilots under equal model/runtime/budget
+   conditions;
+4. compare mechanical score, visual/artifact quality, trajectory quality, and
+   evidence/recovery quality separately;
+5. write a conservative claim, including no-support or inconclusive outcomes.
+
+The public campaign example is
+[`examples/paired-private-pilot.campaign.json`](examples/paired-private-pilot.campaign.json).
+Validate campaign files with:
+
+```bash
+python3 scripts/validate_v2_campaigns.py
+```
+
+Lane C is disabled until a real controller exists. Do not treat the current Open
+Scaffold ledger/analyze lane as a controller lane.
 
 ## Boundary
 

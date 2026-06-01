@@ -105,3 +105,12 @@ A v2 run record should additionally include:
 - separate artifact-quality and workflow-resilience component scores;
 - a claim boundary stating whether the row is a calibration fixture or a real
   contender result.
+
+A v2 paired campaign should additionally freeze before live results:
+
+- campaign JSON matching `v2/campaign.schema.json`;
+- Lane A / Lane B definitions and Lane C disabled unless a real controller exists;
+- same model/runtime/budget/feedback controls across enabled lanes;
+- seed/task pairing rules;
+- visual artifact package requirements and fixed capture seeds;
+- predeclared decision rules and banned claims.
