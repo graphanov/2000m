@@ -519,25 +519,92 @@ fn score_artifact_quality(
         return component(0.0, "invalid v1 conformance JSON");
     };
 
-    if let Some(score) = json.get("compositeScore").and_then(Value::as_f64) {
-        return component(clamp_score(score), "from v1 compositeScore");
+    let Some(score) = verified_v1_conformance_score(ref_path, &json, warnings) else {
+        return component(0.0, "invalid v1 conformance result");
+    };
+    component(score, "from verified v1 conformance result")
+}
+
+fn verified_v1_conformance_score(
+    ref_path: &str,
+    json: &Value,
+    warnings: &mut Vec<String>,
+) -> Option<f64> {
+    if json.get("protocolVersion").and_then(Value::as_str) != Some("2000m.driver.v1") {
+        rank_block_v1(ref_path, "missing or wrong protocolVersion", warnings);
+        return None;
     }
 
-    let pass_count = json.get("passCount").and_then(Value::as_f64);
-    let total_acs = json.get("totalAcs").and_then(Value::as_f64);
-    match (pass_count, total_acs) {
-        (Some(pass_count), Some(total_acs)) if total_acs > 0.0 => component(
-            round2((pass_count / total_acs) * 100.0),
-            "from v1 passCount/totalAcs",
-        ),
-        _ => {
-            warnings.push(format!(
-                "RANK-BLOCK: artifact conformance JSON `{}` lacks compositeScore and passCount/totalAcs; artifact quality is zero",
-                ref_path
-            ));
-            component(0.0, "missing scorer fields")
+    if json
+        .get("determinism")
+        .and_then(|value| value.get("pass"))
+        .and_then(Value::as_bool)
+        != Some(true)
+    {
+        rank_block_v1(ref_path, "determinism.pass is not true", warnings);
+        return None;
+    }
+
+    let Some(pass_count) = json.get("passCount").and_then(Value::as_u64) else {
+        rank_block_v1(ref_path, "missing numeric passCount", warnings);
+        return None;
+    };
+    let Some(total_acs) = json.get("totalAcs").and_then(Value::as_u64) else {
+        rank_block_v1(ref_path, "missing numeric totalAcs", warnings);
+        return None;
+    };
+    if total_acs == 0 || pass_count > total_acs {
+        rank_block_v1(ref_path, "invalid passCount/totalAcs", warnings);
+        return None;
+    }
+
+    let Some(composite_score) = json.get("compositeScore").and_then(Value::as_f64) else {
+        rank_block_v1(ref_path, "missing numeric compositeScore", warnings);
+        return None;
+    };
+    if !(0.0..=100.0).contains(&composite_score) {
+        rank_block_v1(ref_path, "compositeScore outside 0..=100", warnings);
+        return None;
+    }
+
+    let Some(acs) = json.get("acs").and_then(Value::as_array) else {
+        rank_block_v1(ref_path, "missing acs array", warnings);
+        return None;
+    };
+    if acs.len() != total_acs as usize {
+        rank_block_v1(ref_path, "acs length does not match totalAcs", warnings);
+        return None;
+    }
+    for (index, ac) in acs.iter().enumerate() {
+        if ac
+            .get("id")
+            .and_then(Value::as_str)
+            .is_none_or(str::is_empty)
+            || ac.get("pass").and_then(Value::as_bool).is_none()
+            || ac.get("skipped").and_then(Value::as_bool).is_none()
+            || ac.get("quality").and_then(Value::as_u64).is_none()
+            || ac
+                .get("detail")
+                .and_then(Value::as_str)
+                .is_none_or(str::is_empty)
+        {
+            rank_block_v1(
+                ref_path,
+                &format!("acs[{}] is missing required verdict fields", index),
+                warnings,
+            );
+            return None;
         }
     }
+
+    Some(clamp_score(composite_score))
+}
+
+fn rank_block_v1(ref_path: &str, detail: &str, warnings: &mut Vec<String>) {
+    warnings.push(format!(
+        "RANK-BLOCK: artifact conformance JSON `{}` is not a complete 2000m.driver.v1 result: {}",
+        ref_path, detail
+    ));
 }
 
 fn score_feedback_integration(
@@ -961,12 +1028,42 @@ mod tests {
         (dir, path)
     }
 
+    fn v1_result(composite_score: f64) -> Value {
+        let pass_count = ((composite_score / 100.0) * 28.0).round() as usize;
+        let pass_count = pass_count.min(28);
+        let acs: Vec<Value> = (1..=28)
+            .map(|idx| {
+                let pass = idx <= pass_count;
+                json!({
+                    "id": format!("AC{}", idx),
+                    "name": format!("Acceptance criterion {}", idx),
+                    "pass": pass,
+                    "skipped": false,
+                    "quality": if pass { 5 } else { 0 },
+                    "detail": "sample v1 verdict",
+                    "breakdown": {
+                        "basic": if pass { 5 } else { 0 },
+                        "precision": if pass { 5 } else { 0 },
+                        "performance": if pass { 5 } else { 0 },
+                        "polish": if pass { 5 } else { 0 }
+                    }
+                })
+            })
+            .collect();
+        json!({
+            "protocolVersion": "2000m.driver.v1",
+            "gameDir": "https://github.com/example/2000m-entry",
+            "determinism": { "pass": true, "detail": "sample deterministic result" },
+            "passCount": pass_count,
+            "totalAcs": 28,
+            "compositeScore": composite_score,
+            "acs": acs
+        })
+    }
+
     #[test]
     fn consumes_v1_composite_score() {
-        let (_dir, conformance_path) = write_temp_json(
-            "v1.json",
-            json!({ "compositeScore": 94.5, "passCount": 27, "totalAcs": 28 }),
-        );
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(94.5));
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
         let run = base_run("v1.json".to_string());
@@ -976,9 +1073,23 @@ mod tests {
     }
 
     #[test]
-    fn missing_handoff_summary_reduces_recovery_score() {
+    fn fabricated_v1_composite_only_blocks_public_ranking() {
         let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+            write_temp_json("v1.json", json!({ "compositeScore": 100.0 }));
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let run = base_run("v1.json".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result.warnings.iter().any(|warning| {
+            warning.starts_with("RANK-BLOCK:") && warning.contains("protocolVersion")
+        }));
+    }
+
+    #[test]
+    fn missing_handoff_summary_reduces_recovery_score() {
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
         let mut run = base_run("v1.json".to_string());
@@ -993,8 +1104,7 @@ mod tests {
 
     #[test]
     fn trap_phase_penalizes_blind_continuation() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
         let mut run = base_run("v1.json".to_string());
@@ -1009,8 +1119,7 @@ mod tests {
 
     #[test]
     fn private_evidence_blocks_public_ranking() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
         let mut run = base_run("v1.json".to_string());
@@ -1022,8 +1131,7 @@ mod tests {
 
     #[test]
     fn private_v1_conformance_path_blocks_public_ranking() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
         let run = base_run("/Users/private/v1.json".to_string());
@@ -1065,8 +1173,7 @@ mod tests {
 
     #[test]
     fn missing_generic_required_outputs_block_public_ranking() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let scenario = base_scenario();
         let mut run = base_run("v1.json".to_string());
@@ -1086,8 +1193,7 @@ mod tests {
 
     #[test]
     fn framework_specific_neutrality_words_block_ranking() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let mut scenario = base_scenario();
         scenario
@@ -1117,8 +1223,7 @@ mod tests {
 
     #[test]
     fn invalid_required_outputs_are_rejected_before_scoring() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let mut scenario = base_scenario();
         scenario.phases[0]
@@ -1131,8 +1236,7 @@ mod tests {
 
     #[test]
     fn v2_native_track_is_rejected_until_artifact_scoring_exists() {
-        let (_dir, conformance_path) =
-            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let (_dir, conformance_path) = write_temp_json("v1.json", v1_result(80.0));
         let run_file = conformance_path.with_file_name("run.json");
         let mut scenario = base_scenario();
         scenario.base_track = "v2-native-artifact-score".to_string();

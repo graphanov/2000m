@@ -8,5 +8,398 @@
   "passCount": 14,
   "totalAcs": 28,
   "compositeScore": 50,
-  "acs": []
+  "acs": [
+    {
+      "id": "AC1",
+      "name": "Acceptance criterion 1",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC2",
+      "name": "Acceptance criterion 2",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC3",
+      "name": "Acceptance criterion 3",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC4",
+      "name": "Acceptance criterion 4",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC5",
+      "name": "Acceptance criterion 5",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC6",
+      "name": "Acceptance criterion 6",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC7",
+      "name": "Acceptance criterion 7",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC8",
+      "name": "Acceptance criterion 8",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC9",
+      "name": "Acceptance criterion 9",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC10",
+      "name": "Acceptance criterion 10",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC11",
+      "name": "Acceptance criterion 11",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC12",
+      "name": "Acceptance criterion 12",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC13",
+      "name": "Acceptance criterion 13",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC14",
+      "name": "Acceptance criterion 14",
+      "pass": true,
+      "skipped": false,
+      "quality": 5,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 5,
+        "precision": 5,
+        "performance": 5,
+        "polish": 5
+      }
+    },
+    {
+      "id": "AC15",
+      "name": "Acceptance criterion 15",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC16",
+      "name": "Acceptance criterion 16",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC17",
+      "name": "Acceptance criterion 17",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC18",
+      "name": "Acceptance criterion 18",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC19",
+      "name": "Acceptance criterion 19",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC20",
+      "name": "Acceptance criterion 20",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC21",
+      "name": "Acceptance criterion 21",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC22",
+      "name": "Acceptance criterion 22",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC23",
+      "name": "Acceptance criterion 23",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC24",
+      "name": "Acceptance criterion 24",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC25",
+      "name": "Acceptance criterion 25",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC26",
+      "name": "Acceptance criterion 26",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC27",
+      "name": "Acceptance criterion 27",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    },
+    {
+      "id": "AC28",
+      "name": "Acceptance criterion 28",
+      "pass": false,
+      "skipped": false,
+      "quality": 0,
+      "detail": "sample v1 verdict for v2 scorer fixture",
+      "breakdown": {
+        "basic": 0,
+        "precision": 0,
+        "performance": 0,
+        "polish": 0
+      }
+    }
+  ]
 }
