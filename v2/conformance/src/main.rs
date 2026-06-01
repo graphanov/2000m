@@ -575,18 +575,21 @@ fn verified_v1_conformance_score(
         rank_block_v1(ref_path, "acs length does not match totalAcs", warnings);
         return None;
     }
+    let mut computed_pass_count = 0_u64;
+    let mut quality_sum = 0.0;
     for (index, ac) in acs.iter().enumerate() {
-        if ac
+        let id_missing = ac
             .get("id")
             .and_then(Value::as_str)
-            .is_none_or(str::is_empty)
-            || ac.get("pass").and_then(Value::as_bool).is_none()
-            || ac.get("skipped").and_then(Value::as_bool).is_none()
-            || ac.get("quality").and_then(Value::as_u64).is_none()
-            || ac
-                .get("detail")
-                .and_then(Value::as_str)
-                .is_none_or(str::is_empty)
+            .is_none_or(str::is_empty);
+        let pass = ac.get("pass").and_then(Value::as_bool);
+        let skipped = ac.get("skipped").and_then(Value::as_bool);
+        let quality = ac.get("quality").and_then(Value::as_u64);
+        let detail_missing = ac
+            .get("detail")
+            .and_then(Value::as_str)
+            .is_none_or(str::is_empty);
+        if id_missing || pass.is_none() || skipped.is_none() || quality.is_none() || detail_missing
         {
             rank_block_v1(
                 ref_path,
@@ -595,6 +598,37 @@ fn verified_v1_conformance_score(
             );
             return None;
         }
+        let pass = pass.expect("validated pass field");
+        let skipped = skipped.expect("validated skipped field");
+        let quality = quality.expect("validated quality field");
+        if quality > 100 {
+            rank_block_v1(
+                ref_path,
+                &format!("acs[{}] has quality outside 0..=100", index),
+                warnings,
+            );
+            return None;
+        }
+        if pass && !skipped {
+            computed_pass_count += 1;
+        }
+        if !skipped {
+            quality_sum += quality as f64;
+        }
+    }
+    if computed_pass_count != pass_count {
+        rank_block_v1(ref_path, "passCount does not match AC verdicts", warnings);
+        return None;
+    }
+    let computed_composite = (computed_pass_count as f64 / total_acs as f64) * 70.0
+        + (quality_sum / total_acs as f64) * 0.3;
+    if (computed_composite - composite_score).abs() > 0.0001 {
+        rank_block_v1(
+            ref_path,
+            "compositeScore does not match v1 pass/quality formula",
+            warnings,
+        );
+        return None;
     }
 
     Some(clamp_score(composite_score))
@@ -1029,23 +1063,39 @@ mod tests {
     }
 
     fn v1_result(composite_score: f64) -> Value {
-        let pass_count = ((composite_score / 100.0) * 28.0).round() as usize;
-        let pass_count = pass_count.min(28);
+        let mut selected = None;
+        for pass_count in 0..=28_usize {
+            let pass_component = (pass_count as f64 / 28.0) * 70.0;
+            let target_quality_sum = ((composite_score - pass_component) / 0.3 * 28.0).round();
+            if !(0.0..=2800.0).contains(&target_quality_sum) {
+                continue;
+            }
+            let quality_sum = target_quality_sum as usize;
+            let actual = pass_component + (quality_sum as f64 / 28.0) * 0.3;
+            if (actual - composite_score).abs() < 0.0001 {
+                selected = Some((pass_count, quality_sum));
+                break;
+            }
+        }
+        let (pass_count, mut remaining_quality) =
+            selected.expect("test score can be represented by v1 formula");
         let acs: Vec<Value> = (1..=28)
             .map(|idx| {
                 let pass = idx <= pass_count;
+                let quality = remaining_quality.min(100);
+                remaining_quality -= quality;
                 json!({
                     "id": format!("AC{}", idx),
                     "name": format!("Acceptance criterion {}", idx),
                     "pass": pass,
                     "skipped": false,
-                    "quality": if pass { 5 } else { 0 },
+                    "quality": quality,
                     "detail": "sample v1 verdict",
                     "breakdown": {
-                        "basic": if pass { 5 } else { 0 },
-                        "precision": if pass { 5 } else { 0 },
-                        "performance": if pass { 5 } else { 0 },
-                        "polish": if pass { 5 } else { 0 }
+                        "basic": quality,
+                        "precision": quality,
+                        "performance": quality,
+                        "polish": quality
                     }
                 })
             })
@@ -1084,6 +1134,22 @@ mod tests {
         assert_eq!(result.components.artifact_quality.score, 0.0);
         assert!(result.warnings.iter().any(|warning| {
             warning.starts_with("RANK-BLOCK:") && warning.contains("protocolVersion")
+        }));
+    }
+
+    #[test]
+    fn contradictory_v1_aggregate_fields_block_public_ranking() {
+        let mut fake = v1_result(50.0);
+        fake["compositeScore"] = json!(100.0);
+        let (_dir, conformance_path) = write_temp_json("v1.json", fake);
+        let run_file = conformance_path.with_file_name("run.json");
+        let scenario = base_scenario();
+        let run = base_run("v1.json".to_string());
+        let result = score_run(&scenario, &run, &run_file).expect("score run");
+        assert!(!result.ranked);
+        assert_eq!(result.components.artifact_quality.score, 0.0);
+        assert!(result.warnings.iter().any(|warning| {
+            warning.starts_with("RANK-BLOCK:") && warning.contains("compositeScore")
         }));
     }
 
