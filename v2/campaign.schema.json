@@ -88,7 +88,25 @@
     "lanes": {
       "type": "array",
       "minItems": 2,
-      "items": { "$ref": "#/$defs/lane" }
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/lane" },
+      "allOf": [
+        {
+          "contains": { "type": "object", "properties": { "laneId": { "const": "A" } }, "required": ["laneId"] },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": { "type": "object", "properties": { "laneId": { "const": "B" } }, "required": ["laneId"] },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": { "type": "object", "properties": { "laneId": { "const": "C" } }, "required": ["laneId"] },
+          "minContains": 0,
+          "maxContains": 1
+        }
+      ]
     },
     "pairs": {
       "type": "array",
