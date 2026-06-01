@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "2000m.v2.scenario.v1",
+  "scenarioId": "workflow-resilience-smoke",
+  "scenarioVersion": 1,
+  "title": "Workflow-resilience smoke scenario",
+  "baseTrack": "v1-artifact-score",
+  "phases": [
+    {
+      "phaseId": "build",
+      "kind": "initial-build",
+      "prompt": "Produce a Rust game entry for the 2000m task and record reproducible build and score commands.",
+      "allowedInputs": ["README.md", "RULES.md", "v1/"],
+      "requiredOutputs": ["artifact-ref", "build-command", "score-command", "conformance-json"],
+      "trapType": "none"
+    },
+    {
+      "phaseId": "feedback",
+      "kind": "scorer-feedback",
+      "prompt": "Respond to scorer/reviewer feedback with accepted, rejected_with_reason, needs_scorer_inspection, or deferred decisions.",
+      "allowedInputs": ["v1 conformance JSON", "reviewer feedback packet"],
+      "requiredOutputs": ["feedback-response", "evidence-ref"],
+      "trapType": "none"
+    },
+    {
+      "phaseId": "wipe",
+      "kind": "context-wipe-recovery",
+      "prompt": "Resume from only the allowed repo state and generic run record after a context wipe.",
+      "allowedInputs": ["run record", "produced artifact ref", "conformance JSON"],
+      "requiredOutputs": ["handoff-summary", "stop-recommendation"],
+      "trapType": "none"
+    },
+    {
+      "phaseId": "probe-trap",
+      "kind": "requirement-trap",
+      "prompt": "Handle a probe-only visual-polish request without claiming unsupported ranked proof.",
+      "allowedInputs": ["AC verdicts", "probe-only reviewer note"],
+      "requiredOutputs": ["stop-recommendation", "evidence-ref"],
+      "trapType": "probe-only"
+    }
+  ],
+  "scoring": {
+    "artifactQualityWeight": 0.4,
+    "feedbackIntegrationWeight": 0.2,
+    "recoveryHandoffWeight": 0.15,
+    "stopConditionWeight": 0.15,
+    "evidenceReplayWeight": 0.1
+  },
+  "neutralityRules": [
+    "No workflow framework is required or privileged.",
+    "Entrants submit generic run records and reproducible artifact evidence.",
+    "Framework-specific logs may be supplementary evidence only."
+  ]
+}

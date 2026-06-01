@@ -1,0 +1,12 @@
+{
+  "protocolVersion": "2000m.driver.v1",
+  "gameDir": "https://github.com/example/2000m-weak-entry",
+  "determinism": {
+    "pass": true,
+    "detail": "sample fixture, not a real contender result"
+  },
+  "passCount": 14,
+  "totalAcs": 28,
+  "compositeScore": 50,
+  "acs": []
+}
