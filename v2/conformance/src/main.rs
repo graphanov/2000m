@@ -933,14 +933,15 @@ fn resolve_ref(base_file: &Path, reference: &str) -> PathBuf {
 }
 
 fn looks_private_or_local(value: &str) -> bool {
-    let lower = value.to_ascii_lowercase();
-    value.starts_with('/')
-        || value.starts_with('~')
+    let trimmed = value.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    trimmed.starts_with('/')
+        || trimmed.starts_with('~')
         || lower.starts_with("file://")
         || lower.contains("/users/")
         || lower.contains("\\users\\")
         || has_windows_drive_prefix(&lower)
-        || value.starts_with("\\\\")
+        || trimmed.starts_with("\\\\")
         || lower.contains("..")
 }
 
@@ -1320,6 +1321,8 @@ mod tests {
         assert!(looks_private_or_local(r"E:/tmp/2000m-entry"));
         assert!(looks_private_or_local(r"C:Users\alice\run.json"));
         assert!(looks_private_or_local(r"D:tmp\v1.json"));
+        assert!(looks_private_or_local(r" C:tmp\entry"));
+        assert!(looks_private_or_local(r"  \\server\share\2000m-entry"));
         assert!(looks_private_or_local(r"\\server\share\2000m-entry"));
     }
 
