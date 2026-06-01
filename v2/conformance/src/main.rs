@@ -13,6 +13,7 @@ const RESULT_SCHEMA_VERSION: &str = "2000m.v2.result.v1";
 type BoxError = Box<dyn Error + Send + Sync>;
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Scenario {
     #[serde(rename = "schemaVersion")]
     schema_version: String,
@@ -20,6 +21,8 @@ struct Scenario {
     scenario_id: String,
     #[serde(rename = "scenarioVersion")]
     scenario_version: u64,
+    #[serde(rename = "title")]
+    _title: String,
     #[serde(rename = "baseTrack")]
     base_track: String,
     phases: Vec<ScenarioPhase>,
@@ -29,10 +32,15 @@ struct Scenario {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ScenarioPhase {
     #[serde(rename = "phaseId")]
     phase_id: String,
     kind: String,
+    #[serde(rename = "prompt")]
+    _prompt: String,
+    #[serde(default, rename = "allowedInputs")]
+    _allowed_inputs: Vec<String>,
     #[serde(default, rename = "requiredOutputs")]
     required_outputs: Vec<String>,
     #[serde(default, rename = "trapType")]
@@ -40,6 +48,7 @@ struct ScenarioPhase {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ScoringWeights {
     #[serde(rename = "artifactQualityWeight")]
     artifact_quality: f64,
@@ -54,6 +63,7 @@ struct ScoringWeights {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct RunRecord {
     #[serde(rename = "schemaVersion")]
     schema_version: String,
@@ -70,13 +80,17 @@ struct RunRecord {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Entrant {
     label: String,
     #[serde(rename = "processType")]
     process_type: String,
+    #[serde(default, rename = "notes")]
+    _notes: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Artifact {
     #[serde(rename = "repoOrPath")]
     repo_or_path: String,
@@ -91,6 +105,7 @@ struct Artifact {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct RunPhase {
     #[serde(rename = "phaseId")]
     phase_id: String,
@@ -100,20 +115,25 @@ struct RunPhase {
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct FeedbackResponse {
     #[serde(rename = "feedbackId")]
     feedback_id: String,
     decision: String,
     rationale: String,
+    #[serde(default, rename = "evidenceRef")]
+    _evidence_ref: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct FinalRecommendation {
     decision: String,
     rationale: String,
 }
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct EvidenceRef {
     label: String,
     #[serde(rename = "ref")]
@@ -324,16 +344,108 @@ fn validate_contract_identity(
     if scenario.phases.is_empty() {
         warnings.push("RANK-BLOCK: scenario has no phases".to_string());
     }
-    if !matches!(
-        scenario.base_track.as_str(),
-        "v1-artifact-score" | "v2-native-artifact-score"
-    ) {
-        warnings.push(format!(
-            "RANK-BLOCK: unsupported baseTrack `{}`",
+    if scenario.base_track != "v1-artifact-score" {
+        return Err(format!(
+            "unsupported baseTrack `{}`; first v2 scorer supports `v1-artifact-score` only",
             scenario.base_track
-        ));
+        )
+        .into());
+    }
+    validate_contract_values(scenario, run)?;
+    Ok(())
+}
+
+fn validate_contract_values(scenario: &Scenario, run: &RunRecord) -> Result<(), BoxError> {
+    const PHASE_KINDS: &[&str] = &[
+        "initial-build",
+        "scorer-feedback",
+        "reviewer-feedback",
+        "context-wipe-recovery",
+        "requirement-trap",
+        "stop-decision",
+    ];
+    const REQUIRED_OUTPUTS: &[&str] = &[
+        "artifact-ref",
+        "build-command",
+        "score-command",
+        "conformance-json",
+        "feedback-response",
+        "handoff-summary",
+        "stop-recommendation",
+        "evidence-ref",
+    ];
+    const TRAP_TYPES: &[&str] = &["none", "impossible", "stale", "probe-only"];
+    const PROCESS_TYPES: &[&str] = &[
+        "single-model",
+        "model-plus-operator",
+        "scripted-agent-loop",
+        "workflow-system",
+        "other",
+    ];
+    const FEEDBACK_DECISIONS: &[&str] = &[
+        "accepted",
+        "rejected_with_reason",
+        "needs_scorer_inspection",
+        "deferred",
+    ];
+    const FINAL_DECISIONS: &[&str] = &["continue", "stop", "redesign", "inspect_scorer"];
+    const EVIDENCE_KINDS: &[&str] = &[
+        "repo",
+        "commit",
+        "conformance-json",
+        "log",
+        "summary",
+        "other",
+    ];
+
+    for phase in &scenario.phases {
+        ensure_allowed("phase.kind", &phase.kind, PHASE_KINDS)?;
+        if let Some(trap_type) = &phase.trap_type {
+            ensure_allowed("phase.trapType", trap_type, TRAP_TYPES)?;
+        }
+        for output in &phase.required_outputs {
+            ensure_allowed("phase.requiredOutputs", output, REQUIRED_OUTPUTS)?;
+        }
+    }
+    ensure_allowed(
+        "entrant.processType",
+        &run.entrant.process_type,
+        PROCESS_TYPES,
+    )?;
+    ensure_allowed(
+        "finalRecommendation.decision",
+        &run.final_recommendation.decision,
+        FINAL_DECISIONS,
+    )?;
+    for phase in &run.phases {
+        for response in &phase.feedback_responses {
+            ensure_allowed(
+                "feedbackResponses.decision",
+                &response.decision,
+                FEEDBACK_DECISIONS,
+            )?;
+        }
+    }
+    for evidence in &run.evidence {
+        if let Some(kind) = &evidence.kind {
+            ensure_allowed("evidence.kind", kind, EVIDENCE_KINDS)?;
+        }
     }
     Ok(())
+}
+
+fn ensure_allowed(field: &str, value: &str, allowed: &[&str]) -> Result<(), BoxError> {
+    if allowed.contains(&value) {
+        Ok(())
+    } else {
+        Err(format!(
+            "unsupported {} value `{}`; allowed: {}",
+            field,
+            value,
+            allowed.join(", ")
+        )
+        .into())
+    }
 }
 
 fn validate_neutrality(scenario: &Scenario, warnings: &mut Vec<String>) {
@@ -714,6 +826,7 @@ mod tests {
             schema_version: SCENARIO_SCHEMA_VERSION.to_string(),
             scenario_id: "workflow-resilience-smoke".to_string(),
             scenario_version: 1,
+            _title: "Workflow-resilience smoke scenario".to_string(),
             base_track: "v1-artifact-score".to_string(),
             neutrality_rules: vec!["No workflow framework is required or privileged.".to_string()],
             scoring: ScoringWeights {
@@ -727,6 +840,8 @@ mod tests {
                 ScenarioPhase {
                     phase_id: "build".to_string(),
                     kind: "initial-build".to_string(),
+                    _prompt: "Build and score the artifact.".to_string(),
+                    _allowed_inputs: vec![],
                     required_outputs: vec![
                         "artifact-ref".to_string(),
                         "conformance-json".to_string(),
@@ -736,18 +851,24 @@ mod tests {
                 ScenarioPhase {
                     phase_id: "feedback".to_string(),
                     kind: "scorer-feedback".to_string(),
+                    _prompt: "Respond to scorer feedback.".to_string(),
+                    _allowed_inputs: vec![],
                     required_outputs: vec!["feedback-response".to_string()],
                     trap_type: Some("none".to_string()),
                 },
                 ScenarioPhase {
                     phase_id: "wipe".to_string(),
                     kind: "context-wipe-recovery".to_string(),
+                    _prompt: "Resume after context wipe.".to_string(),
+                    _allowed_inputs: vec![],
                     required_outputs: vec!["handoff-summary".to_string()],
                     trap_type: Some("none".to_string()),
                 },
                 ScenarioPhase {
                     phase_id: "trap".to_string(),
                     kind: "requirement-trap".to_string(),
+                    _prompt: "Handle probe-only trap.".to_string(),
+                    _allowed_inputs: vec![],
                     required_outputs: vec!["stop-recommendation".to_string()],
                     trap_type: Some("probe-only".to_string()),
                 },
@@ -763,6 +884,7 @@ mod tests {
             entrant: Entrant {
                 label: "neutral-entrant".to_string(),
                 process_type: "scripted-agent-loop".to_string(),
+                _notes: None,
             },
             artifact: Artifact {
                 repo_or_path: "https://github.com/example/2000m-entry".to_string(),
@@ -792,6 +914,7 @@ mod tests {
                         rationale:
                             "Probe-only signal should not be claimed as a ranked visual pass."
                                 .to_string(),
+                        _evidence_ref: None,
                     }],
                 },
                 RunPhase {
@@ -946,5 +1069,46 @@ mod tests {
             .warnings
             .iter()
             .any(|warning| warning.contains("framework-specific")));
+    }
+
+    #[test]
+    fn unknown_run_record_fields_are_rejected() {
+        let mut value: Value =
+            serde_json::from_str(include_str!("../../examples/weak-run-record.json"))
+                .expect("example parses");
+        value.as_object_mut().expect("run record object").insert(
+            "privateOperatorState".to_string(),
+            json!({ "hidden": true }),
+        );
+        let err = serde_json::from_value::<RunRecord>(value).expect_err("unknown field rejected");
+        assert!(err.to_string().contains("unknown field"));
+    }
+
+    #[test]
+    fn invalid_required_outputs_are_rejected_before_scoring() {
+        let (_dir, conformance_path) =
+            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let run_file = conformance_path.with_file_name("run.json");
+        let mut scenario = base_scenario();
+        scenario.phases[0]
+            .required_outputs
+            .push("framework:specific".to_string());
+        let run = base_run("v1.json".to_string());
+        let err = score_run(&scenario, &run, &run_file).expect_err("invalid output rejected");
+        assert!(err.to_string().contains("phase.requiredOutputs"));
+    }
+
+    #[test]
+    fn v2_native_track_is_rejected_until_artifact_scoring_exists() {
+        let (_dir, conformance_path) =
+            write_temp_json("v1.json", json!({ "compositeScore": 80.0 }));
+        let run_file = conformance_path.with_file_name("run.json");
+        let mut scenario = base_scenario();
+        scenario.base_track = "v2-native-artifact-score".to_string();
+        let run = base_run("v1.json".to_string());
+        let err = score_run(&scenario, &run, &run_file).expect_err("native track rejected");
+        assert!(err
+            .to_string()
+            .contains("first v2 scorer supports `v1-artifact-score` only"));
     }
 }

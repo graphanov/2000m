@@ -31,7 +31,7 @@
     },
     "baseTrack": {
       "type": "string",
-      "enum": ["v1-artifact-score", "v2-native-artifact-score"]
+      "enum": ["v1-artifact-score"]
     },
     "phases": {
       "type": "array",
