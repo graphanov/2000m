@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2000m.v3.manifest.v1",
+  "protocolVersion": "2000m.driver.v3",
+  "language": "python",
+  "driver": {
+    "command": "python3",
+    "args": ["driver.py"],
+    "timeoutSeconds": 2
+  },
+  "assets": {
+    "license": "no-assets",
+    "attestation": "Stderr-drain regression fixture uses no assets.",
+    "sourceRefs": []
+  },
+  "notes": "Driver writes enough stderr output to block an undrained pipe."
+}

@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::error::Error;
 use std::fs;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
@@ -520,6 +520,17 @@ impl Harness {
             .map_err(|err| format!("failed to spawn driver: {err}"))?;
         let stdin = child.stdin.take().ok_or("driver stdin not available")?;
         let stdout = child.stdout.take().ok_or("driver stdout not available")?;
+        let mut stderr = child.stderr.take().ok_or("driver stderr not available")?;
+        let _stderr_thread = thread::spawn(move || {
+            let mut buffer = [0_u8; 8192];
+            loop {
+                match stderr.read(&mut buffer) {
+                    Ok(0) => break,
+                    Ok(_) => continue,
+                    Err(_) => break,
+                }
+            }
+        });
         let (response_tx, response_rx) = mpsc::channel();
         let _reader_thread = thread::spawn(move || {
             let mut reader = BufReader::new(stdout);
@@ -1426,6 +1437,18 @@ mod tests {
         let result = score(&harness, None);
         assert!(!result.mechanical.ranked);
         assert!(result.mechanical.failed_acs.contains(&"M06".to_string()));
+    }
+
+    #[test]
+    fn driver_stderr_is_drained() {
+        let manifest = default_fixture_set_path()
+            .parent()
+            .unwrap()
+            .join("stderr-artifact/2000m.v3.json");
+        let harness = Harness::load(manifest, default_fixture_set_path()).unwrap();
+        let mut client = harness.spawn_driver().unwrap();
+        let response = client.send("init", json!({ "seed": 1 })).unwrap();
+        assert!(response.ok);
     }
 
     #[test]

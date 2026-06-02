@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -42,11 +43,58 @@ def run_git(args: list[str]) -> list[str]:
     return [line for line in completed.stdout.splitlines() if line.strip()]
 
 
+def try_git(args: list[str]) -> list[str]:
+    completed = subprocess.run(["git", *args], cwd=ROOT, check=False, text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    if completed.returncode != 0:
+        return []
+    return [line for line in completed.stdout.splitlines() if line.strip()]
+
+
+def git_ref_exists(ref: str) -> bool:
+    return subprocess.run(["git", "rev-parse", "--verify", ref], cwd=ROOT, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+
+def maybe_fetch_base_ref(base_ref: str) -> None:
+    if not base_ref or git_ref_exists(f"origin/{base_ref}"):
+        return
+    subprocess.run(
+        ["git", "fetch", "--quiet", "--depth=100", "origin", f"{base_ref}:refs/remotes/origin/{base_ref}"],
+        cwd=ROOT,
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
+def diff_base() -> str:
+    explicit = os.environ.get("PUBLIC_SAFETY_BASE")
+    if explicit:
+        return explicit
+
+    github_base = os.environ.get("GITHUB_BASE_REF", "")
+    if github_base:
+        maybe_fetch_base_ref(github_base)
+
+    candidates: list[str] = []
+    if github_base:
+        candidates.extend([f"origin/{github_base}", github_base])
+    candidates.extend(["origin/main", "main"])
+    for candidate in candidates:
+        if not git_ref_exists(candidate):
+            continue
+        base = try_git(["merge-base", candidate, "HEAD"])
+        if base:
+            return base[0]
+    return "HEAD"
+
+
 def changed_files() -> list[Path]:
-    tracked = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", "HEAD", "--"])
+    base = diff_base()
+    tracked = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", base, "HEAD", "--"])
+    working = run_git(["diff", "--name-only", "--diff-filter=ACMRTUXB", "HEAD", "--"])
     untracked = run_git(["ls-files", "--others", "--exclude-standard"])
     out: list[Path] = []
-    for raw in [*tracked, *untracked]:
+    for raw in [*tracked, *working, *untracked]:
         path = ROOT / raw
         if path == SELF or not path.is_file():
             continue
