@@ -40,24 +40,43 @@ def lane_key(value: str) -> str:
     return value.lower()
 
 
+def private_pair_dirs(run_root: Path) -> list[Path]:
+    roots = [run_root, run_root / "private-pilot"]
+    pair_dirs: dict[str, Path] = {}
+    for root in roots:
+        for path in sorted(root.glob("pilot-seed-*")):
+            if path.is_dir():
+                pair_dirs[path.resolve().as_posix()] = path
+        for path in sorted(root.glob("*/pilot-seed-*")):
+            if path.is_dir():
+                pair_dirs[path.resolve().as_posix()] = path
+    return [pair_dirs[key] for key in sorted(pair_dirs)]
+
+
 def discover_seeds(run_root: Path) -> list[int]:
+    seeds: set[int] = set()
     records = run_root / "records"
-    seeds: list[int] = []
     for path in sorted(records.glob("pilot-seed-*")):
         match = re.fullmatch(r"pilot-seed-(\d+)", path.name)
         if match:
-            seeds.append(int(match.group(1)))
-    return seeds
+            seeds.add(int(match.group(1)))
+    for path in private_pair_dirs(run_root):
+        match = re.fullmatch(r"pilot-seed-(\d+)", path.name)
+        if match:
+            seeds.add(int(match.group(1)))
+    return sorted(seeds)
 
 
 def discover_lanes(run_root: Path, seeds: list[int]) -> list[str]:
     lanes: set[str] = set()
     for seed in seeds:
-        pair = run_root / "records" / f"pilot-seed-{seed}"
-        for path in sorted(pair.glob("lane-*")):
-            match = re.fullmatch(r"lane-([A-Za-z0-9_-]+)", path.name)
-            if match:
-                lanes.add(match.group(1).lower())
+        record_pair = run_root / "records" / f"pilot-seed-{seed}"
+        pair_dirs = [record_pair] + [path for path in private_pair_dirs(run_root) if path.name == f"pilot-seed-{seed}"]
+        for pair in pair_dirs:
+            for path in sorted(pair.glob("lane-*")):
+                match = re.fullmatch(r"lane-([A-Za-z0-9_-]+)", path.name)
+                if match:
+                    lanes.add(match.group(1).lower())
     return sorted(lanes)
 
 
@@ -97,9 +116,24 @@ def same_file_content(left: Path, right: Path) -> bool:
         return False
 
 
+def private_generation_dir(run_root: Path, seed: int, lane: str, generation: int) -> Path | None:
+    pair_name = f"pilot-seed-{seed}"
+    for pair in private_pair_dirs(run_root):
+        if pair.name == pair_name:
+            return pair / f"lane-{lane}" / f"generation-{generation:02d}"
+    return None
+
+
 def check_generation(run_root: Path, seed: int, lane: str, generation: int, require_workspace_copy: bool) -> dict[str, Any]:
     lane_dir = run_root / "records" / f"pilot-seed-{seed}" / f"lane-{lane}" / f"generation-{generation:02d}"
     workspace_dir = run_root / "workspaces" / f"2000m-private-pilot-seed-{seed}-lane-{lane}" / "trajectory" / f"generation-{generation:02d}"
+    layout = "records-workspaces"
+    if not lane_dir.exists() and not workspace_dir.exists():
+        private_dir = private_generation_dir(run_root, seed, lane, generation)
+        if private_dir is not None:
+            layout = "private-pilot"
+            lane_dir = private_dir
+            workspace_dir = private_dir
 
     checks: dict[str, bool] = {}
     missing: list[str] = []
@@ -117,10 +151,11 @@ def check_generation(run_root: Path, seed: int, lane: str, generation: int, requ
             checks[key] = exists
             if not exists:
                 missing.append(relative_or_str(workspace_dir / filename, run_root))
-        for filename in REQUIRED_RECORD_FILES:
-            record_path = lane_dir / filename
-            workspace_path = workspace_dir / filename
-            checks[f"workspace_matches_record/{filename}"] = same_file_content(record_path, workspace_path)
+        if workspace_dir != lane_dir:
+            for filename in REQUIRED_RECORD_FILES:
+                record_path = lane_dir / filename
+                workspace_path = workspace_dir / filename
+                checks[f"workspace_matches_record/{filename}"] = same_file_content(record_path, workspace_path)
 
     feedback_path = workspace_dir / "scorer-feedback.md" if require_workspace_copy else lane_dir / "scorer-feedback.md"
     conformance_path = workspace_dir / "v1-conformance.json" if require_workspace_copy else lane_dir / "v1-conformance.json"
@@ -141,6 +176,7 @@ def check_generation(run_root: Path, seed: int, lane: str, generation: int, requ
         "taskSeed": seed,
         "lane": lane.upper(),
         "generation": generation,
+        "layout": layout,
         "recordFeedbackDir": relative_or_str(lane_dir, run_root),
         "workspaceFeedbackDir": relative_or_str(workspace_dir, run_root),
         "checks": checks,
@@ -152,8 +188,8 @@ def check_generation(run_root: Path, seed: int, lane: str, generation: int, requ
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check v2 private-pilot feedback parity before future generations use scorer feedback.")
-    parser.add_argument("run_root", help="Private pilot run root containing records/ and workspaces/.")
-    parser.add_argument("--seeds", nargs="*", type=int, help="Task seeds to check. Defaults to records/pilot-seed-* discovery.")
+    parser.add_argument("run_root", help="Private pilot run root containing records/ plus workspaces/, or private-pilot/<campaign>/<pair>/ lane directories.")
+    parser.add_argument("--seeds", nargs="*", type=int, help="Task seeds to check. Defaults to records/pilot-seed-* and private-pilot/*/pilot-seed-* discovery.")
     parser.add_argument("--lanes", nargs="*", type=lane_key, help="Lane IDs to check. Defaults to lane-* discovery for discovered seeds.")
     parser.add_argument("--generations", nargs="*", type=int, help="Generation numbers to check. Defaults to 1..generation-cap.")
     parser.add_argument("--generation-cap", type=int, default=3, help="Generation cap used when --generations is omitted. Default: 3.")

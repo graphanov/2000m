@@ -198,10 +198,10 @@ Feedback packets:
 
 Before any generation can consume prior scorer feedback, every enabled lane must have the same class of workspace-local detailed feedback packet for the prior scored generation.
 
-Required workspace-local packet shape:
+Required workspace-local packet shape, either under the runbook's per-lane `private-pilot/<campaign-id>/<pair-id>/lane-*/generation-XX/` directory or under a runner mirror such as `workspaces/<lane-workspace>/trajectory/generation-XX/`:
 
 ```text
-trajectory/generation-XX/
+generation-XX/ or trajectory/generation-XX/
   v1-conformance.json
   score.log
   scorer-feedback.md
@@ -303,6 +303,8 @@ private-pilot/<campaign-id>/<pair-id>/
       test.log
       score.log
       v1-conformance.json
+      scorer-feedback.md
+      feedback-manifest.json
       trajectory.md
       visual-package/
       handoff-summary.md
@@ -321,6 +323,8 @@ private-pilot/<campaign-id>/<pair-id>/
       test.log
       score.log
       v1-conformance.json
+      scorer-feedback.md
+      feedback-manifest.json
       open-scaffold-run-packet.json
       evaluation.json
       evolve-analyze.md
