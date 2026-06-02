@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2000m.v3.manifest.v1",
+  "protocolVersion": "2000m.driver.v3",
+  "language": "rust",
+  "driver": {
+    "command": "python3",
+    "args": ["driver.py"],
+    "timeoutSeconds": 30
+  },
+  "assets": {
+    "license": "no-assets",
+    "attestation": "Mechanical fixture only; no visual assets are included.",
+    "sourceRefs": []
+  },
+  "notes": "Mechanical scorer calibration fixture; not a live contender. Capture/playable are intentionally absent so visual ranking remains blocked without affecting mechanical scoring."
+}

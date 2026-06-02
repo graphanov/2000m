@@ -1,0 +1,135 @@
+{
+  "bannedClaims": [
+    "makes the model smarter",
+    "proves workflow superiority",
+    "adoption proof",
+    "public contender result from a fixture",
+    "high mechanical score means a good game"
+  ],
+  "campaignId": "v3-paired-private-pilot",
+  "claimBoundary": "calibration-only",
+  "controls": {
+    "contextWipePhase": "after-first-scored-generation",
+    "generationCap": 3,
+    "model": "frozen-model-placeholder",
+    "networkPolicy": "disabled-during-scoring",
+    "promptBudget": 12000,
+    "reviewerFeedbackBudget": 1,
+    "runtime": "codex-cli-calibration-smoke",
+    "sameFeedbackPackets": true,
+    "samePromptBudget": true,
+    "sameReviewerBudget": true,
+    "sameScorerDiagnostics": true,
+    "sameVisualSeeds": true,
+    "scorerFeedbackBudget": 1,
+    "wallClockPolicy": "diagnostic-only"
+  },
+  "lanes": [
+    {
+      "allowedTools": [
+        "public v3 spec",
+        "exact scorer diagnostics",
+        "same reviewer packet",
+        "native capture command"
+      ],
+      "enabled": true,
+      "forbiddenAdvantages": [
+        "campaign-specific workflow under test",
+        "hidden lane-specific hints",
+        "post-hoc scorer edits"
+      ],
+      "label": "unstructured baseline with full rubric",
+      "laneId": "A",
+      "processType": "naked-model",
+      "requiredEvidence": [
+        "generic run record",
+        "mechanical result",
+        "visual package or blocker",
+        "feedback decision table",
+        "public-safety scan",
+        "final handoff"
+      ]
+    },
+    {
+      "allowedTools": [
+        "public v3 spec",
+        "exact scorer diagnostics",
+        "same reviewer packet",
+        "native capture command",
+        "pinned workflow-under-test only when enabled by protocol"
+      ],
+      "enabled": true,
+      "forbiddenAdvantages": [
+        "hidden lane-specific hints",
+        "post-hoc scorer edits",
+        "unfrozen workflow version",
+        "extra feedback not given to Lane A"
+      ],
+      "label": "pinned workflow-system lane if enabled by protocol",
+      "laneId": "B",
+      "processType": "workflow-system",
+      "requiredEvidence": [
+        "generic run record",
+        "mechanical result",
+        "visual package or blocker",
+        "feedback decision table",
+        "public-safety scan",
+        "final handoff"
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "enabledLanes": [
+        "A",
+        "B"
+      ],
+      "notes": "Calibration/private-pilot pair; no public support claim.",
+      "pairId": "v3-private-pilot-pair-101",
+      "scenarioRef": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "taskSeed": 101
+    },
+    {
+      "enabledLanes": [
+        "A",
+        "B"
+      ],
+      "notes": "Calibration/private-pilot pair; no public support claim.",
+      "pairId": "v3-private-pilot-pair-202",
+      "scenarioRef": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "taskSeed": 202
+    }
+  ],
+  "protocolFreeze": {
+    "benchmarkCommit": "da98594",
+    "captureWindows": [
+      "early-game",
+      "mid-run-obstacle-field",
+      "ramp-style-sequence",
+      "monster-pressure",
+      "post-feedback-rerun"
+    ],
+    "decisionRulesRef": "v3/examples/campaigns/v3-paired-private-pilot-protocol.json#thresholds",
+    "driverProtocolRef": "v3/2000m.driver.v3.md",
+    "feedbackPacketRef": "v3/examples/campaigns/v3-paired-private-pilot-protocol.json#feedbackPackets",
+    "freezeBeforeLiveResults": true,
+    "hiddenChallengePolicy": "declared-public-hidden-split",
+    "mechanicalAcSpecRef": "v3/MECHANICAL_AC_SPEC.md",
+    "mutationAfterLiveResultsPolicy": "affected-runs-calibration-only",
+    "noProtocolMutationAfterLiveResults": true,
+    "sandboxPolicyRef": "v3/SANDBOX_AND_RESOURCE_POLICY.md",
+    "scenarioRefs": [
+      "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json"
+    ],
+    "scoringModelRef": "v3/SCORING_MODEL.md",
+    "visualRubricRef": "v3/VISUAL_RUBRIC.md",
+    "visualSeeds": [
+      1101,
+      2202,
+      3303
+    ]
+  },
+  "schemaVersion": "2000m.v3.campaign.v1",
+  "status": "frozen",
+  "title": "v3 paired private pilot frozen protocol fixture"
+}

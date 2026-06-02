@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2000m.v3.manifest.v1",
+  "protocolVersion": "2000m.driver.v3",
+  "language": "rust",
+  "driver": {
+    "command": "python3",
+    "args": ["driver.py", "--poison-enum"],
+    "timeoutSeconds": 30
+  },
+  "assets": {
+    "license": "no-assets",
+    "attestation": "Invalid-enum mechanical fixture only; no visual assets are included.",
+    "sourceRefs": []
+  },
+  "notes": "Invalid fixture that emits unsupported obstacle/event enum values."
+}

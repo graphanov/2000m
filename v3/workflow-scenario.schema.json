@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v3/workflow-scenario.schema.json",
+  "title": "2000m v3 workflow-resilience calibration scenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "scenarioId",
+    "scenarioVersion",
+    "title",
+    "status",
+    "claimBoundary",
+    "stressors",
+    "phases",
+    "reviewerPacket",
+    "goldenFixtures"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "2000m.v3.workflow-scenario.v1"},
+    "scenarioId": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"},
+    "scenarioVersion": {"type": "integer", "minimum": 1},
+    "title": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["calibration", "frozen"]},
+    "claimBoundary": {"type": "string", "enum": ["calibration-only"]},
+    "stressors": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "context-wipe",
+          "reviewer-feedback-valid-misleading-stale",
+          "regression-trap",
+          "impossible-or-probe-only-requirement",
+          "scorer-feedback-integration",
+          "final-handoff"
+        ]
+      }
+    },
+    "phases": {
+      "type": "array",
+      "minItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["phaseId", "kind", "requiredEvidence", "scoringFocus"],
+        "properties": {
+          "phaseId": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "enum": ["protocol-freeze", "initial-attempt", "context-wipe-recovery", "reviewer-injection", "regression-trap", "stale-or-impossible-requirement", "final-handoff"]},
+          "requiredEvidence": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "scoringFocus": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "reviewerPacket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["packetId", "items"],
+      "properties": {
+        "packetId": {"type": "string", "minLength": 1},
+        "items": {
+          "type": "array",
+          "minItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["feedbackId", "kind", "expectedDecision", "summary"],
+            "properties": {
+              "feedbackId": {"type": "string", "minLength": 1},
+              "kind": {"type": "string", "enum": ["valid-mechanical", "valid-visual", "misleading", "ambiguous", "stale-impossible", "scorer-diagnostic"]},
+              "expectedDecision": {"type": "string", "enum": ["accepted", "rejected_with_reason", "deferred", "needs_scorer_inspection", "needs_owner_taste_gate"]},
+              "summary": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "goldenFixtures": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["fixtureId", "kind", "runRecordRef", "resultRef", "expected"],
+        "properties": {
+          "fixtureId": {"type": "string", "minLength": 1},
+          "kind": {"type": "string", "enum": ["complete-ranked", "weak-ranked", "missing-visual-rank-blocked", "wrong-feedback-routing", "wrong-stop-decision", "private-path-rank-blocked", "scorer-mutated-invalid"]},
+          "runRecordRef": {"type": "string"},
+          "resultRef": {"type": "string"},
+          "expected": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

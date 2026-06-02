@@ -8,4 +8,5 @@ members = [
     "conformance",
     "stub-driver",
     "v2/conformance",
+    "v3/conformance",
 ]

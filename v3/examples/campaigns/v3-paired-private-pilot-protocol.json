@@ -1,0 +1,95 @@
+{
+  "benchmarkCommit": "da98594",
+  "captureWindows": [
+    "early-game",
+    "mid-run-obstacle-field",
+    "ramp-style-sequence",
+    "monster-pressure",
+    "post-feedback-rerun"
+  ],
+  "claimCeiling": "private-directional-signal-or-calibration-only",
+  "contextWipeBoundary": "after-first-scored-generation",
+  "feedbackPackets": [
+    {
+      "deliveredToLanes": [
+        "A",
+        "B"
+      ],
+      "identical": true,
+      "packetId": "v3-calibration-reviewer-packet-1",
+      "sourceRef": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json#reviewerPacket"
+    }
+  ],
+  "lanes": [
+    {
+      "forbiddenCampaignSpecificWorkflow": true,
+      "laneId": "A",
+      "promptRef": "v3/PAIRED_CAMPAIGN_PROTOCOL.md#lane-a-prompt--unstructured-baseline",
+      "receivesFullRubric": true,
+      "receivesSameFeedback": true,
+      "role": "unstructured-baseline"
+    },
+    {
+      "laneId": "B",
+      "pinnedWorkflowOnlyIfEnabled": true,
+      "promptRef": "v3/PAIRED_CAMPAIGN_PROTOCOL.md#lane-b-prompt--pinned-workflow-lane",
+      "receivesFullRubric": true,
+      "receivesHiddenInfo": false,
+      "receivesSameFeedback": true,
+      "role": "pinned-workflow-lane"
+    }
+  ],
+  "prompts": {
+    "laneA": "You are Lane A for the 2000m v3 paired calibration campaign. Use the full public rubric and same feedback without the campaign-specific structured workflow under test. Produce generic evidence and conservative calibration-only claims.",
+    "laneB": "You are Lane B for the 2000m v3 paired calibration campaign. Use the same public rubric and feedback. If the frozen workflow-under-test is enabled, use only the pinned version and receive no hidden information. Produce generic evidence and conservative calibration-only claims."
+  },
+  "protocolId": "v3-paired-private-pilot-freeze",
+  "publicSafety": {
+    "claimBoundary": "calibration-only",
+    "rawArtifactsInPublicRepo": false,
+    "rawRunRootPolicy": "external-run-root-required"
+  },
+  "runtime": {
+    "cargoVersion": "record-before-private-run",
+    "codexCliVersion": "record-before-private-run",
+    "model": "frozen-model-placeholder",
+    "networkPolicy": "disabled-during-scoring",
+    "pythonVersion": "record-before-private-run",
+    "rustVersion": "record-before-private-run"
+  },
+  "schemaVersion": "2000m.v3.paired-protocol.v1",
+  "seeds": {
+    "taskSeeds": [
+      101,
+      202
+    ],
+    "visualSeeds": [
+      1101,
+      2202,
+      3303
+    ]
+  },
+  "status": "frozen",
+  "thresholds": {
+    "directionalSignalMinimumPairs": 2,
+    "materialMechanicalLossMaxAcs": 1,
+    "predeclared": true,
+    "publicSupportAllowed": false,
+    "visualClaimsRequireRankedCapture": true,
+    "workflowDecisionFields": [
+      "contextWipeRecoveryScore",
+      "feedbackDecisionScore",
+      "regressionProtectionScore",
+      "impossibleRequirementHandlingScore",
+      "handoffScore"
+    ]
+  },
+  "workflowUnderTest": {
+    "commit": "not-enabled-for-calibration-smoke",
+    "enabled": false,
+    "name": "optional-pinned-workflow-system",
+    "pinRequiredBeforeLiveRun": true,
+    "receivesHiddenInfo": false,
+    "version": "not-enabled-for-calibration-smoke"
+  }
+}

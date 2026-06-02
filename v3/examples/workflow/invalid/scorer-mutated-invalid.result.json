@@ -1,0 +1,66 @@
+{
+  "campaignId": "v3-workflow-calibration",
+  "claimBoundary": "calibration-only",
+  "entrant": {
+    "model": "fixture-model",
+    "processType": "scripted-agent",
+    "runtime": "fixture-runtime"
+  },
+  "evidence": {
+    "claimBoundary": "calibration-only",
+    "compactSummaryRef": "v3/examples/workflow/evidence/summary.scorer-mutated.md",
+    "privateRefsBlocked": false,
+    "publicSafe": true,
+    "replayable": true,
+    "requiredRefsMissing": [
+      "visualPackageRef"
+    ]
+  },
+  "laneId": "A",
+  "mechanical": {
+    "compositeScore": 0.0,
+    "determinism": {
+      "details": "calibration fixture",
+      "pass": false
+    },
+    "failedAcs": [
+      "M06"
+    ],
+    "hiddenChallengeSummary": "calibration hidden checks stable",
+    "passCount": 0,
+    "protocolVersion": "2000m.driver.v3",
+    "ranked": false,
+    "regressionSummary": "calibration regression checks stable",
+    "resultJsonRef": "v3/fixtures/mechanical/out/valid-result.json",
+    "totalAcs": 24
+  },
+  "protocolFreeze": {
+    "calibrationOnlyIfChanged": true,
+    "changedAfterLiveResults": false,
+    "scorerMutationObserved": true
+  },
+  "scenarioId": "v3-workflow-calibration",
+  "schemaVersion": "2000m.v3.result.v1",
+  "taskSeed": 101,
+  "visual": {
+    "blockReason": "missing-native-capture-or-playable-surface",
+    "captureDeterminism": "blocked",
+    "ranked": false,
+    "rubricRecordRef": "",
+    "visualPackageRef": ""
+  },
+  "warnings": [
+    "Calibration fixture; not a contender result and not public support evidence."
+  ],
+  "workflow": {
+    "contextWipeRecoveryScore": 0,
+    "feedbackDecisionScore": 0,
+    "finalRecommendation": "redesign",
+    "handoffScore": 0,
+    "impossibleRequirementHandlingScore": 0,
+    "rationaleRefs": [
+      "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json"
+    ],
+    "regressionProtectionScore": 0
+  }
+}

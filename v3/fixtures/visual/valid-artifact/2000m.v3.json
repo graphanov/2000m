@@ -1,0 +1,55 @@
+{
+  "schemaVersion": "2000m.v3.manifest.v1",
+  "protocolVersion": "2000m.driver.v3",
+  "language": "rust",
+  "driver": {
+    "command": "python3",
+    "args": [
+      "driver.py"
+    ],
+    "timeoutSeconds": 30
+  },
+  "capture": {
+    "command": "python3",
+    "args": [
+      "capture.py",
+      "--seed",
+      "{seed}",
+      "--window",
+      "{window}",
+      "--out",
+      "{out}"
+    ],
+    "outputs": {
+      "screenshot": "{out}/screenshot.png",
+      "replay": "{out}/replay.gif",
+      "frames": "{out}/frames.json",
+      "rubricMetadata": "{out}/rubric-metadata.json"
+    },
+    "metadata": {
+      "placeholders": [
+        "{seed}",
+        "{window}",
+        "{out}"
+      ],
+      "deterministicForSameSeedWindowAndArtifact": true
+    }
+  },
+  "playable": {
+    "command": "python3",
+    "args": [
+      "-m",
+      "http.server",
+      "0",
+      "--directory",
+      "playable"
+    ],
+    "urlOrPath": "playable/index.html"
+  },
+  "assets": {
+    "license": "no-assets",
+    "attestation": "Visual capture fixture uses generated placeholder pixels only; no copied or extracted game assets are included.",
+    "sourceRefs": []
+  },
+  "notes": "Visual harness calibration fixture; not a live contender."
+}

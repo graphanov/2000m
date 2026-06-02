@@ -59,5 +59,43 @@
       "resultJson": "v2/examples/results/pilot-private-path-result.json",
       "claimBoundary": "rank-block fixture: private/local scorer input"
     }
+  ],
+  "v3RankingRule": "V3 rows are separated-track calibration fixtures only. Mechanical, visual, workflow, and evidence tracks are rendered separately; no v3 row is a contender result or public support claim.",
+  "v3Rows": [
+    {
+      "track": "v3-separated-tracks",
+      "scenario": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "runRecord": "v3/examples/workflow/run-records/complete-ranked.run-record.json",
+      "resultJson": "v3/examples/workflow/results/complete-ranked.result.json",
+      "claimBoundary": "calibration fixture, non-contender result"
+    },
+    {
+      "track": "v3-separated-tracks",
+      "scenario": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "runRecord": "v3/examples/workflow/run-records/weak-ranked.run-record.json",
+      "resultJson": "v3/examples/workflow/results/weak-ranked.result.json",
+      "claimBoundary": "calibration fixture, ranked but intentionally weak"
+    },
+    {
+      "track": "v3-separated-tracks",
+      "scenario": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "runRecord": "v3/examples/workflow/run-records/missing-visual-rank-blocked.run-record.json",
+      "resultJson": "v3/examples/workflow/results/missing-visual-rank-blocked.result.json",
+      "claimBoundary": "calibration fixture, visual rank-blocked"
+    },
+    {
+      "track": "v3-separated-tracks",
+      "scenario": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "runRecord": "v3/examples/workflow/run-records/wrong-feedback-routing.run-record.json",
+      "resultJson": "v3/examples/workflow/results/wrong-feedback-routing.result.json",
+      "claimBoundary": "calibration fixture, wrong feedback routing"
+    },
+    {
+      "track": "v3-separated-tracks",
+      "scenario": "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json",
+      "runRecord": "v3/examples/workflow/run-records/wrong-stop-decision.run-record.json",
+      "resultJson": "v3/examples/workflow/results/wrong-stop-decision.result.json",
+      "claimBoundary": "calibration fixture, wrong stop decision"
+    }
   ]
 }

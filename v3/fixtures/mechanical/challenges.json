@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "2000m.v3.mechanical-fixtures.v1",
+  "description": "Public/hidden/calibration challenge fixtures for the v3 mechanical scaffold. Calibration-only; not contender evidence.",
+  "fixtures": [
+    {"challengeId": "public-basic", "kind": "basic", "visibility": "public", "seed": 1101, "inputs": [{"steer": 0}, {"steer": 1}, {"steer": -1}]},
+    {"challengeId": "public-collision", "kind": "collision", "visibility": "public", "seed": 1102, "inputs": [{"steer": -1}, {"steer": 0}]},
+    {"challengeId": "public-recovery", "kind": "recovery", "visibility": "public", "seed": 1103, "inputs": [{"recover": true}, {"steer": 0}]},
+    {"challengeId": "public-ramp", "kind": "ramp", "visibility": "public", "seed": 1104, "inputs": [{"jump": true}, {"steer": 0}]},
+    {"challengeId": "public-airborne", "kind": "airborne", "visibility": "public", "seed": 1105, "inputs": [{"jump": true}, {"land": true}]},
+    {"challengeId": "public-style", "kind": "style", "visibility": "public", "seed": 1106, "inputs": [{"style": true}, {"steer": 1}]},
+    {"challengeId": "public-monster-spawn", "kind": "monster-spawn", "visibility": "public", "seed": 1107, "inputs": [{"steer": 0}]},
+    {"challengeId": "hidden-basic", "kind": "hidden-basic", "visibility": "hidden", "seed": 2201, "inputs": [{"steer": 0}, {"steer": 1}, {"steer": 1}]},
+    {"challengeId": "hidden-monster-pursuit", "kind": "monster-pursuit", "visibility": "hidden", "seed": 2202, "inputs": [{"steer": -1}, {"steer": -1}]},
+    {"challengeId": "hidden-monster-contact", "kind": "monster-contact", "visibility": "hidden", "seed": 2203, "inputs": [{"steer": 0}, {"flee": true}]},
+    {"challengeId": "calibration-replay", "kind": "calibration-replay", "visibility": "calibration", "seed": 3301, "inputs": [{"steer": 0}, {"steer": -1}, {"style": true}, {"jump": true}]}
+  ]
+}

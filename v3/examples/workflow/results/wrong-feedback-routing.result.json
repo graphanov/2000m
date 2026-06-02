@@ -1,0 +1,63 @@
+{
+  "campaignId": "v3-workflow-calibration",
+  "claimBoundary": "calibration-only",
+  "entrant": {
+    "model": "fixture-model",
+    "processType": "scripted-agent",
+    "runtime": "fixture-runtime"
+  },
+  "evidence": {
+    "claimBoundary": "calibration-only",
+    "compactSummaryRef": "v3/examples/workflow/evidence/summary.wrong-feedback.md",
+    "privateRefsBlocked": false,
+    "publicSafe": true,
+    "replayable": true,
+    "requiredRefsMissing": []
+  },
+  "laneId": "A",
+  "mechanical": {
+    "compositeScore": 100.0,
+    "determinism": {
+      "details": "calibration fixture",
+      "pass": true
+    },
+    "failedAcs": [],
+    "hiddenChallengeSummary": "calibration hidden checks stable",
+    "passCount": 24,
+    "protocolVersion": "2000m.driver.v3",
+    "ranked": true,
+    "regressionSummary": "calibration regression checks stable",
+    "resultJsonRef": "v3/fixtures/mechanical/out/valid-result.json",
+    "totalAcs": 24
+  },
+  "protocolFreeze": {
+    "calibrationOnlyIfChanged": true,
+    "changedAfterLiveResults": false,
+    "scorerMutationObserved": false
+  },
+  "scenarioId": "v3-workflow-calibration",
+  "schemaVersion": "2000m.v3.result.v1",
+  "taskSeed": 101,
+  "visual": {
+    "blockReason": "none",
+    "captureDeterminism": "passed",
+    "ranked": true,
+    "rubricRecordRef": "v3/examples/workflow/evidence/rubric-record.complete.json",
+    "score": 55,
+    "visualPackageRef": "v3/examples/valid/visual-package.foundation.json"
+  },
+  "warnings": [
+    "Calibration fixture; not a contender result and not public support evidence."
+  ],
+  "workflow": {
+    "contextWipeRecoveryScore": 80,
+    "feedbackDecisionScore": 0,
+    "finalRecommendation": "continue",
+    "handoffScore": 70,
+    "impossibleRequirementHandlingScore": 60,
+    "rationaleRefs": [
+      "v3/examples/workflow/scenarios/v3-workflow-calibration.scenario.json"
+    ],
+    "regressionProtectionScore": 70
+  }
+}

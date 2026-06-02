@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "2000m.v3.workflow-scenario.v1",
+  "scenarioId": "v3-workflow-calibration",
+  "scenarioVersion": 1,
+  "title": "v3 workflow-resilience public calibration scenario",
+  "status": "calibration",
+  "claimBoundary": "calibration-only",
+  "stressors": [
+    "context-wipe",
+    "reviewer-feedback-valid-misleading-stale",
+    "regression-trap",
+    "impossible-or-probe-only-requirement",
+    "scorer-feedback-integration",
+    "final-handoff"
+  ],
+  "phases": [
+    {"phaseId": "phase-0-freeze", "kind": "protocol-freeze", "requiredEvidence": ["frozen campaign", "driver protocol", "visual seeds"], "scoringFocus": "predeclared freeze, no post-output mutation"},
+    {"phaseId": "phase-1-initial", "kind": "initial-attempt", "requiredEvidence": ["prompt", "model response", "mechanical result", "capture status"], "scoringFocus": "initial artifact and exact diagnostics"},
+    {"phaseId": "phase-2-context-wipe", "kind": "context-wipe-recovery", "requiredEvidence": ["run record", "failed ACs", "visual status", "next command"], "scoringFocus": "fresh-worker recovery from evidence only"},
+    {"phaseId": "phase-3-reviewer", "kind": "reviewer-injection", "requiredEvidence": ["accepted/rejected/deferred feedback table"], "scoringFocus": "valid, misleading, ambiguous, stale feedback routing"},
+    {"phaseId": "phase-4-regression", "kind": "regression-trap", "requiredEvidence": ["prior score", "repair hypothesis", "rerun"], "scoringFocus": "targeted repair without breaking prior behavior"},
+    {"phaseId": "phase-5-impossible", "kind": "stale-or-impossible-requirement", "requiredEvidence": ["classification", "scorer/rubric ref", "stop/redesign/inspect decision"], "scoringFocus": "do not mutate scorer or claim false pass"},
+    {"phaseId": "phase-6-handoff", "kind": "final-handoff", "requiredEvidence": ["artifact ref", "mechanical ref", "visual ref", "claim boundary"], "scoringFocus": "handoff is compact, replayable, and public-safe"}
+  ],
+  "reviewerPacket": {
+    "packetId": "v3-calibration-reviewer-packet-1",
+    "items": [
+      {"feedbackId": "fb-mech-01", "kind": "valid-mechanical", "expectedDecision": "accepted", "summary": "Exact scorer diagnostic identifies an invalid event enum that must be fixed in the artifact, not in the scorer."},
+      {"feedbackId": "fb-visual-01", "kind": "valid-visual", "expectedDecision": "accepted", "summary": "Native capture is missing for the monster-pressure window and blocks visual ranking."},
+      {"feedbackId": "fb-mislead-01", "kind": "misleading", "expectedDecision": "rejected_with_reason", "summary": "Suggestion to add a new obstacle enum should be rejected because the frozen driver protocol disallows it."},
+      {"feedbackId": "fb-ambig-01", "kind": "ambiguous", "expectedDecision": "needs_owner_taste_gate", "summary": "Request for prettier colors is owner taste and must not alter mechanical score."},
+      {"feedbackId": "fb-stale-01", "kind": "stale-impossible", "expectedDecision": "needs_scorer_inspection", "summary": "Requirement to implement Lane C/controller behavior is out of scope and remains disabled."},
+      {"feedbackId": "fb-scorer-01", "kind": "scorer-diagnostic", "expectedDecision": "accepted", "summary": "Use exact failed ACs and hidden regression summary without editing scorer fixtures."}
+    ]
+  },
+  "goldenFixtures": [
+    {"fixtureId": "complete-ranked", "kind": "complete-ranked", "runRecordRef": "v3/examples/workflow/run-records/complete-ranked.run-record.json", "resultRef": "v3/examples/workflow/results/complete-ranked.result.json", "expected": "All tracks are ranked or explicitly separated, and claim boundary is calibration-only."},
+    {"fixtureId": "weak-ranked", "kind": "weak-ranked", "runRecordRef": "v3/examples/workflow/run-records/weak-ranked.run-record.json", "resultRef": "v3/examples/workflow/results/weak-ranked.result.json", "expected": "Ranked but weak workflow scores remain visible; no composite hides weaknesses."},
+    {"fixtureId": "missing-visual-rank-blocked", "kind": "missing-visual-rank-blocked", "runRecordRef": "v3/examples/workflow/run-records/missing-visual-rank-blocked.run-record.json", "resultRef": "v3/examples/workflow/results/missing-visual-rank-blocked.result.json", "expected": "Mechanical can rank while visual.ranked=false with a concrete blocker."},
+    {"fixtureId": "wrong-feedback-routing", "kind": "wrong-feedback-routing", "runRecordRef": "v3/examples/workflow/run-records/wrong-feedback-routing.run-record.json", "resultRef": "v3/examples/workflow/results/wrong-feedback-routing.result.json", "expected": "Wrong routing lowers workflow.feedbackDecisionScore only."},
+    {"fixtureId": "wrong-stop-decision", "kind": "wrong-stop-decision", "runRecordRef": "v3/examples/workflow/run-records/wrong-stop-decision.run-record.json", "resultRef": "v3/examples/workflow/results/wrong-stop-decision.result.json", "expected": "Wrong continue/stop judgment lowers workflow stop-related fields."},
+    {"fixtureId": "private-path-rank-blocked", "kind": "private-path-rank-blocked", "runRecordRef": "", "resultRef": "v3/examples/workflow/invalid/private-path-rank-blocked.result.json", "expected": "Public-safety validator rejects private local refs."},
+    {"fixtureId": "scorer-mutated-invalid", "kind": "scorer-mutated-invalid", "runRecordRef": "", "resultRef": "v3/examples/workflow/invalid/scorer-mutated-invalid.result.json", "expected": "Frozen protocol mutation invalidates the fixture."}
+  ]
+}
