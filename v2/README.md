@@ -29,6 +29,26 @@ cargo run --manifest-path v2/conformance/Cargo.toml -- \
 
 The included weak sample should score below ceiling. It is a scorer smoke fixture, not a contender result.
 
+## Stage 1 neutral smokes
+
+Before any live paired pilot, run the neutral Stage 1 smoke pack:
+
+```bash
+python3 scripts/run_v2_stage1_smokes.py
+```
+
+This checks the v0 stub discrimination band, the v2 smoke fixture, every pilot
+calibration fixture, rank blockers for missing outputs and private/local scorer
+inputs, result-spine rendering, campaign validation, neutral-contract wording,
+and a deterministic visual/replay package generated from the fixed campaign
+seeds. It produces no contender row and no workflow-value claim.
+
+To inspect the generated visual package, write it to an empty directory:
+
+```bash
+python3 scripts/run_v2_stage1_smokes.py --visual-out <empty-output-dir>
+```
+
 ## Pilot calibration pack
 
 The [`examples/`](examples/) directory also contains a `workflow-resilience-pilot`
