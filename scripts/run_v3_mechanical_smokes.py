@@ -18,6 +18,9 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = ROOT / "v3" / "fixtures" / "mechanical" / "out"
 VALID_ARTIFACT = ROOT / "v3" / "fixtures" / "mechanical" / "valid-artifact"
 INVALID_ENUM_ARTIFACT = ROOT / "v3" / "fixtures" / "mechanical" / "invalid-enum-artifact"
+TIMEOUT_ARTIFACT = ROOT / "v3" / "fixtures" / "mechanical" / "timeout-artifact"
+STDERR_ARTIFACT = ROOT / "v3" / "fixtures" / "mechanical" / "stderr-artifact"
+MANIFEST_FIXTURES = [VALID_ARTIFACT, INVALID_ENUM_ARTIFACT, TIMEOUT_ARTIFACT, STDERR_ARTIFACT]
 
 
 def run(cmd: list[str]) -> None:
@@ -34,6 +37,8 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="repo-relative or absolute output directory for ignored smoke JSON")
     args = parser.parse_args()
     out = args.out if args.out.is_absolute() else ROOT / args.out
+    for fixture in MANIFEST_FIXTURES:
+        run([sys.executable, "scripts/validate_v3_schemas.py", str((fixture / "2000m.v3.json").relative_to(ROOT))])
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
