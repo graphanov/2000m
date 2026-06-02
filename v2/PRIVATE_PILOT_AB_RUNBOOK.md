@@ -168,6 +168,7 @@ The pilot is invalid or calibration-only if these controls drift:
 - same visual capture seeds/windows;
 - same allowed benchmark/scorer inputs;
 - same feedback packet content at the same logical phase boundaries;
+- same workspace-local detailed scorer feedback visibility before the next generation, including exact scorer diagnostics;
 - no hidden human repair hints in one lane only;
 - no post-hoc hand edits disguised as model output;
 - no scorer/scenario/campaign/rubric mutation after live result inspection.
@@ -192,6 +193,30 @@ Feedback packets:
 - Reviewer feedback packets, if used, must be identical in budget and comparable in content.
 - Feedback must not contain lane-specific hidden repair hints.
 - Every accepted/rejected/deferred/inspect decision is recorded in the v2 run record.
+
+### Feedback parity guard
+
+Before any generation can consume prior scorer feedback, every enabled lane must have the same class of workspace-local detailed feedback packet for the prior scored generation.
+
+Required workspace-local packet shape, either under the runbook's per-lane `private-pilot/<campaign-id>/<pair-id>/lane-*/generation-XX/` directory or under a runner mirror such as `workspaces/<lane-workspace>/trajectory/generation-XX/`:
+
+```text
+generation-XX/ or trajectory/generation-XX/
+  v1-conformance.json
+  score.log
+  scorer-feedback.md
+  feedback-manifest.json
+```
+
+`scorer-feedback.md` must include an `## Exact scorer diagnostics` section and preserve concrete scorer details, not only broad AC labels. Schema/driver validation details must be visible to every lane under the same path shape. Lane A must not be artificially blind while Lane B has local `.osc/evidence` imports.
+
+Run the parity checker after scoring a generation and before launching the next one. Against a campaign root, the checker defaults to the frozen pilot matrix (`101`, `202`, `303` × lanes `A`, `B`) so missing seed/lane packets fail instead of being silently omitted. For a custom campaign or intentionally scoped check, pass `--seeds` and `--lanes` explicitly.
+
+```bash
+python3 scripts/check_v2_feedback_parity.py <private-run-root> --generations <generation-number>
+```
+
+If this fails for any enabled lane, stop and mark the affected run calibration-only. Do not compare that run as clean A/B evidence.
 
 ## Context-wipe timing and handoff test
 
@@ -278,6 +303,8 @@ private-pilot/<campaign-id>/<pair-id>/
       test.log
       score.log
       v1-conformance.json
+      scorer-feedback.md
+      feedback-manifest.json
       trajectory.md
       visual-package/
       handoff-summary.md
@@ -296,6 +323,8 @@ private-pilot/<campaign-id>/<pair-id>/
       test.log
       score.log
       v1-conformance.json
+      scorer-feedback.md
+      feedback-manifest.json
       open-scaffold-run-packet.json
       evaluation.json
       evolve-analyze.md
@@ -413,12 +442,13 @@ The benchmark repo owns neutral protocol/scorer/result truth. Produced artifact 
 6. For each task seed, prepare Lane A and Lane B prompts before executing either lane.
 7. Run Lane A and Lane B under the same model/runtime/budget.
 8. Save per-generation evidence and v1 conformance JSON.
-9. Apply the context-wipe/handoff test at the same logical point.
-10. Capture visual packages with the same seeds/windows.
-11. Produce v2 run records and v2 scorer results.
-12. Compare mechanical, visual/artifact, trajectory, and evidence/recovery tracks separately.
-13. Apply decision rules without overclaiming.
-14. Stop before public proof claims, publish, release, or merge unless separately approved.
+9. Copy detailed scorer feedback into every enabled lane's workspace under `trajectory/generation-XX/` and run `python3 scripts/check_v2_feedback_parity.py <private-run-root> --generations <generation-number>` before the next generation can start.
+10. Apply the context-wipe/handoff test at the same logical point.
+11. Capture visual packages with the same seeds/windows.
+12. Produce v2 run records and v2 scorer results.
+13. Compare mechanical, visual/artifact, trajectory, and evidence/recovery tracks separately.
+14. Apply decision rules without overclaiming.
+15. Stop before public proof claims, publish, release, or merge unless separately approved.
 
 ## Phase 2 bootstrap prompt template
 
