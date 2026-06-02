@@ -210,7 +210,7 @@ generation-XX/ or trajectory/generation-XX/
 
 `scorer-feedback.md` must include an `## Exact scorer diagnostics` section and preserve concrete scorer details, not only broad AC labels. Schema/driver validation details must be visible to every lane under the same path shape. Lane A must not be artificially blind while Lane B has local `.osc/evidence` imports.
 
-Run the parity checker after scoring a generation and before launching the next one:
+Run the parity checker after scoring a generation and before launching the next one. Against a campaign root, the checker defaults to the frozen pilot matrix (`101`, `202`, `303` × lanes `A`, `B`) so missing seed/lane packets fail instead of being silently omitted. For a custom campaign or intentionally scoped check, pass `--seeds` and `--lanes` explicitly.
 
 ```bash
 python3 scripts/check_v2_feedback_parity.py <private-run-root> --generations <generation-number>

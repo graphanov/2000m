@@ -18,6 +18,8 @@ from typing import Any
 
 REQUIRED_RECORD_FILES = ("v1-conformance.json", "score.log", "scorer-feedback.md")
 REQUIRED_WORKSPACE_FILES = REQUIRED_RECORD_FILES + ("feedback-manifest.json",)
+DEFAULT_PILOT_SEEDS = [101, 202, 303]
+DEFAULT_PILOT_LANES = ["a", "b"]
 
 
 class FeedbackParityError(ValueError):
@@ -191,8 +193,8 @@ def check_generation(run_root: Path, seed: int, lane: str, generation: int, requ
 def main() -> int:
     parser = argparse.ArgumentParser(description="Check v2 private-pilot feedback parity before future generations use scorer feedback.")
     parser.add_argument("run_root", help="Private pilot run root containing records/ plus workspaces/, or private-pilot/<campaign>/<pair>/ lane directories.")
-    parser.add_argument("--seeds", nargs="*", type=int, help="Task seeds to check. Defaults to records/pilot-seed-* and private-pilot/*/pilot-seed-* discovery.")
-    parser.add_argument("--lanes", nargs="*", type=lane_key, help="Lane IDs to check. Defaults to lane-* discovery for discovered seeds.")
+    parser.add_argument("--seeds", nargs="*", type=int, help="Task seeds to check. Defaults to the frozen pilot seeds 101/202/303, or the seed in run_root when run_root is a pilot-seed-* pair directory.")
+    parser.add_argument("--lanes", nargs="*", type=lane_key, help="Lane IDs to check. Defaults to the enabled A/B pilot lanes.")
     parser.add_argument("--generations", nargs="*", type=int, help="Generation numbers to check. Defaults to 1..generation-cap.")
     parser.add_argument("--generation-cap", type=int, default=3, help="Generation cap used when --generations is omitted. Default: 3.")
     parser.add_argument("--records-only", action="store_true", help="Check generation records only. Default requires workspace-local feedback copies too.")
@@ -203,13 +205,19 @@ def main() -> int:
     if not run_root.exists():
         print(f"FAIL: run root does not exist: {run_root}", file=sys.stderr)
         return 1
-    seeds = args.seeds or discover_seeds(run_root)
+    pair_root_match = re.fullmatch(r"pilot-seed-(\d+)", run_root.name)
+    if args.seeds is not None:
+        seeds = args.seeds
+    elif pair_root_match:
+        seeds = [int(pair_root_match.group(1))]
+    else:
+        seeds = DEFAULT_PILOT_SEEDS
     if not seeds:
-        print("FAIL: no seeds supplied or discovered under records/pilot-seed-*", file=sys.stderr)
+        print("FAIL: no seeds supplied", file=sys.stderr)
         return 1
-    lanes = args.lanes or discover_lanes(run_root, seeds)
+    lanes = args.lanes if args.lanes is not None else DEFAULT_PILOT_LANES
     if not lanes:
-        print("FAIL: no lanes supplied or discovered under records/pilot-seed-*/lane-*", file=sys.stderr)
+        print("FAIL: no lanes supplied", file=sys.stderr)
         return 1
     generations = args.generations or list(range(1, args.generation_cap + 1))
     if any(gen < 1 for gen in generations):
