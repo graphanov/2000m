@@ -9,7 +9,10 @@ skier elsewhere; this repo runs the mountain.
 The skier can be playful. The scoreboard is not: rank comes from deterministic
 protocol checks. The repo now has three course markers: **v0 / 16 mechanical ACs**
 for the baseline harness, **v1 / 28 ACs with quality scoring** in [`v1/`](v1/),
-and a **v2 workflow-resilience scorer/harness** in [`v2/`](v2/).
+and a **v2 workflow-resilience scorer/harness** in [`v2/`](v2/). The draft
+**v3 design packet** in [`v3/`](v3/) resets the benchmark around separate
+mechanical correctness, visual/product quality, workflow resilience, and
+evidence/recovery/governance tracks; it is not an implemented scorer yet.
 
 ## The run, in one screen
 
@@ -147,6 +150,7 @@ cargo run --manifest-path v1/conformance/Cargo.toml -- path/to/produced-game
 | [`conformance/`](conformance/) | v0 judge/scorer with 16 mechanical ACs. |
 | [`v1/`](v1/) | v1 protocol, 28-AC spec, quality-scored conformance suite, and weak v1 stub smoke. |
 | [`v2/`](v2/) | Workflow-resilience scorer/harness with generic scenario/run-record/result contracts and calibration fixtures. |
+| [`v3/`](v3/) | Draft design packet for a four-track benchmark reset: mechanical, visual/product, workflow resilience, and evidence/recovery/governance. |
 | [`stub-driver/`](stub-driver/) | Smoke-test skier that shows the v0 harness path works while failing most ACs. |
 | [`results/README.md`](results/README.md) | Scorecard format for benchmark rows. |
 | [`results/leaderboard.md`](results/leaderboard.md) | Rendered mechanical scoreboard. |
