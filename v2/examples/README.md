@@ -26,6 +26,13 @@ superior.
 - `pilot-private-path-run-record.json` — rank-block fixture with a private/local
   v1 scorer input ref.
 
+## Campaign fixture
+
+- `paired-private-pilot.campaign.json` — draft paired-campaign config for the
+  next private pilot. It freezes Lane A as the naked model baseline, Lane B as
+  the Open Scaffold ledger/analyze lane, and Lane C as disabled until a real
+  controller exists. It is a protocol fixture, not a completed run result.
+
 ## Generate the result fixtures
 
 ```bash
@@ -38,3 +45,9 @@ python3 scripts/render_results.py --check
 
 A valid calibration pack should include both ranked and rank-blocked examples so
 future scorer changes cannot collapse v2 into score-only artifact deltas.
+
+Validate campaign fixtures with:
+
+```bash
+python3 scripts/validate_v2_campaigns.py
+```

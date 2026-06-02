@@ -2,7 +2,7 @@
 
 ## Status
 
-Initial implementation plus calibration/result-spine support. This document defines the benchmark-v2 contract, the first scorer/harness implementation, and the public calibration fixtures. It does not launch models and does not claim that any entrant wins.
+Initial implementation plus calibration/result-spine and paired-campaign protocol support. This document defines the benchmark-v2 contract, the first scorer/harness implementation, the public calibration fixtures, and the protocol required before live paired pilots. It does not launch models and does not claim that any entrant wins.
 
 ## Why v2 exists
 
@@ -184,11 +184,14 @@ Implemented in the first scorer/harness and calibration slices:
    missing-output rank-blocked, and private-path rank-blocked cases.
 9. Machine-readable v2 result schema plus rendered result-spine support in
    `results/results.json` and `results/leaderboard.md`.
+10. Paired-campaign protocol, campaign schema, campaign example, and visual
+    artifact-quality track specification.
 
 Still future work:
 
-- hidden/private scenario variants;
-- real private calibration pilot with live contenders;
+- Stage 1 neutral smoke execution under the frozen protocol;
+- private paired pilot with live Lane A and Lane B contenders;
+- hidden/private scenario variants for larger evidence campaigns;
 - model/runtime launcher integration, if ever needed;
 - richer reviewer packet fixtures;
 - non-fixture v2 result rows once a real run has been produced and reviewed.
@@ -215,3 +218,17 @@ Still future work:
   can be checked in CI.
 - public docs state that calibration fixtures are not contender results, model
   rankings, or workflow-framework superiority claims.
+
+## Acceptance criteria for the protocol-freeze slice
+
+- `EXPERIMENT_PROTOCOL.md` states the workflow-value hypothesis, lane
+  definitions, controlled conditions, freeze rules, and claim ladder.
+- `campaign.schema.json` and at least one example campaign file define a paired
+  Lane A / Lane B pilot while keeping Lane C disabled until a real controller
+  exists.
+- `VISUAL_ARTIFACT_TRACK.md` specifies screenshot/GIF/replay capture, fixed
+  seeds, visual rubric, optional blinded comparison, and measurable visual
+  diagnostics.
+- CI validates campaign files so future pilots cannot omit freeze rules,
+  equal-condition controls, lane boundaries, or banned-claim markers.
+- No live model run is launched by the protocol-freeze slice.
