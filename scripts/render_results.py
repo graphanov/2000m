@@ -124,12 +124,46 @@ def validate_v2_row(row: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+
+def validate_v3_row(row: dict[str, Any]) -> dict[str, Any]:
+    required = ["track", "scenario", "runRecord", "resultJson", "claimBoundary"]
+    for key in required:
+        require(key in row, f"v3 row missing `{key}`")
+        require(isinstance(row[key], str) and row[key].strip(), f"v3 row `{key}` must be a non-empty string")
+        check_public_ref(row[key], f"v3 {key}")
+    require(row["track"] == "v3-separated-tracks", f"unsupported v3 track `{row['track']}`")
+    require("calibration" in row["claimBoundary"].lower() or "non-contender" in row["claimBoundary"].lower(), "v3 rows must be labeled calibration/non-contender")
+
+    scenario_path = ROOT / row["scenario"]
+    run_record_path = ROOT / row["runRecord"]
+    result_path = ROOT / row["resultJson"]
+    require(scenario_path.exists(), f"v3 scenario missing: {row['scenario']}")
+    require(run_record_path.exists(), f"v3 run record missing: {row['runRecord']}")
+    require(result_path.exists(), f"v3 result missing: {row['resultJson']}")
+    scenario = load_json(scenario_path)
+    run_record = load_json(run_record_path)
+    result = load_json(result_path)
+    require(scenario.get("schemaVersion") == "2000m.v3.workflow-scenario.v1", f"{row['scenario']} has wrong schemaVersion")
+    require(run_record.get("schemaVersion") == "2000m.v3.run-record.v1", f"{row['runRecord']} has wrong schemaVersion")
+    require(result.get("schemaVersion") == "2000m.v3.result.v1", f"{row['resultJson']} has wrong schemaVersion")
+    require(result.get("campaignId") == run_record.get("campaignId"), f"{row['resultJson']} campaignId does not match {row['runRecord']}")
+    require(result.get("scenarioId") == run_record.get("scenarioId"), f"{row['resultJson']} scenarioId does not match {row['runRecord']}")
+    require(result.get("scenarioId") == scenario.get("scenarioId"), f"{row['resultJson']} scenarioId does not match {row['scenario']}")
+    require(result.get("claimBoundary") == "calibration-only", f"{row['resultJson']} must remain calibration-only")
+    require(result.get("evidence", {}).get("claimBoundary") == result.get("claimBoundary"), f"{row['resultJson']} evidence claimBoundary mismatch")
+    require("compositeScore" not in result, f"{row['resultJson']} must not expose a top-level v3 compositeScore")
+    for track in ("mechanical", "visual", "workflow", "evidence"):
+        require(isinstance(result.get(track), dict), f"{row['resultJson']} missing separate `{track}` track")
+    return result
+
 def render(data: dict[str, Any]) -> str:
     require(data.get("schemaVersion") == "2000m.results.v1", "results.json schemaVersion must be 2000m.results.v1")
     v0_rows = data.get("rows", [])
     v2_rows = data.get("v2Rows", [])
+    v3_rows = data.get("v3Rows", [])
     require(isinstance(v0_rows, list), "rows must be a list")
     require(isinstance(v2_rows, list), "v2Rows must be a list")
+    require(isinstance(v3_rows, list), "v3Rows must be a list")
 
     lines: list[str] = [
         "# 2000m Leaderboard",
@@ -178,6 +212,41 @@ def render(data: dict[str, Any]) -> str:
             f"{fmt_score(components['recoveryHandoff']['score'])} | "
             f"{fmt_score(components['stopCondition']['score'])} | "
             f"{fmt_score(components['evidenceReplay']['score'])} | "
+            f"{link(row['resultJson'])} | {link(row['runRecord'])} | {row['claimBoundary']} |"
+        )
+
+
+    lines.extend([
+        "",
+        "## v3 separated-track calibration spine",
+        "",
+        "These rows exercise v3 fixture handling only. They are calibration/non-contender",
+        "rows, not public benchmark support, not model rankings, and not proof",
+        "about any workflow system. Mechanical, visual, workflow, and evidence fields remain",
+        "separate so no composite can hide blocked or weak tracks.",
+        "",
+        "| Scenario | Lane | Process | Mechanical | Visual | Workflow avg | Evidence safe? | Result | Run record | Claim boundary |",
+        "|---|---|---|---:|---|---:|:---:|---|---|---|",
+    ])
+
+    for row in v3_rows:
+        result = validate_v3_row(row)
+        mechanical = result["mechanical"]
+        visual = result["visual"]
+        workflow = result["workflow"]
+        workflow_scores = [
+            workflow["contextWipeRecoveryScore"],
+            workflow["feedbackDecisionScore"],
+            workflow["regressionProtectionScore"],
+            workflow["impossibleRequirementHandlingScore"],
+            workflow["handoffScore"],
+        ]
+        workflow_avg = sum(float(value) for value in workflow_scores) / len(workflow_scores)
+        visual_label = "ranked" if visual["ranked"] else f"blocked: {visual['blockReason']}"
+        lines.append(
+            f"| {result['scenarioId']} | {result['laneId']} | {result['entrant']['processType']} | "
+            f"{mechanical['passCount']}/{mechanical['totalAcs']} | {visual_label} | "
+            f"{fmt_score(workflow_avg)} | {fmt_bool(result['evidence']['publicSafe'])} | "
             f"{link(row['resultJson'])} | {link(row['runRecord'])} | {row['claimBoundary']} |"
         )
 

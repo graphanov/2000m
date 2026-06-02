@@ -1,0 +1,4 @@
+{
+  "command": "python3 capture.py --seed {seed} --window {window} --out {out}",
+  "status": "passed"
+}
