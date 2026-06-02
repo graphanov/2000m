@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "2000m.v3.campaign.v1",
+  "campaignId": "v3-foundation-fixture",
+  "title": "v3 foundation schema fixture",
+  "status": "draft",
+  "protocolFreeze": {
+    "freezeBeforeLiveResults": true,
+    "noProtocolMutationAfterLiveResults": true,
+    "mutationAfterLiveResultsPolicy": "affected-runs-calibration-only",
+    "benchmarkCommit": "0000000-foundation-fixture",
+    "driverProtocolRef": "v3/2000m.driver.v3.md",
+    "mechanicalAcSpecRef": "v3/MECHANICAL_AC_SPEC.md",
+    "visualRubricRef": "v3/VISUAL_RUBRIC.md",
+    "scoringModelRef": "v3/SCORING_MODEL.md",
+    "sandboxPolicyRef": "v3/SANDBOX_AND_RESOURCE_POLICY.md",
+    "scenarioRefs": [
+      "v3/examples/valid/run-record.foundation.json"
+    ],
+    "feedbackPacketRef": "v3/WORKFLOW_RESILIENCE_PROTOCOL.md#phase-3--reviewer-injection",
+    "decisionRulesRef": "v3/EVIDENCE_AND_CLAIMS.md#claim-ladder",
+    "captureWindows": [
+      "early-game",
+      "monster-pressure"
+    ],
+    "visualSeeds": [
+      1101,
+      2202
+    ],
+    "hiddenChallengePolicy": "declared-public-hidden-split"
+  },
+  "controls": {
+    "model": "fixture-model",
+    "runtime": "fixture-runtime",
+    "generationCap": 2,
+    "promptBudget": 12000,
+    "scorerFeedbackBudget": 1,
+    "reviewerFeedbackBudget": 1,
+    "contextWipePhase": "after-first-scored-generation",
+    "samePromptBudget": true,
+    "sameFeedbackPackets": true,
+    "sameScorerDiagnostics": true,
+    "sameVisualSeeds": true,
+    "sameReviewerBudget": true,
+    "wallClockPolicy": "diagnostic-only",
+    "networkPolicy": "disabled-during-scoring"
+  },
+  "lanes": [
+    {
+      "laneId": "A",
+      "label": "unstructured baseline",
+      "processType": "naked-model",
+      "enabled": true,
+      "allowedTools": [
+        "public spec",
+        "scorer feedback"
+      ],
+      "forbiddenAdvantages": [
+        "lane-specific hidden hints",
+        "post-hoc scorer edits"
+      ],
+      "requiredEvidence": [
+        "generic run record",
+        "mechanical result",
+        "visual status"
+      ]
+    },
+    {
+      "laneId": "B",
+      "label": "structured workflow lane",
+      "processType": "workflow-system",
+      "enabled": true,
+      "allowedTools": [
+        "public spec",
+        "same scorer feedback"
+      ],
+      "forbiddenAdvantages": [
+        "lane-specific hidden hints",
+        "post-hoc scorer edits"
+      ],
+      "requiredEvidence": [
+        "generic run record",
+        "mechanical result",
+        "visual status"
+      ],
+      "frameworkRequiredField": "specific-workflow-framework-plan-ref"
+    }
+  ],
+  "pairs": [
+    {
+      "pairId": "fixture-pair-101",
+      "taskSeed": 101,
+      "scenarioRef": "v3/examples/valid/run-record.foundation.json",
+      "enabledLanes": [
+        "A",
+        "B"
+      ],
+      "notes": "Schema fixture only; not a pilot."
+    }
+  ],
+  "claimBoundary": "calibration-only",
+  "bannedClaims": [
+    "makes the model smarter",
+    "proves workflow superiority",
+    "adoption proof",
+    "public contender result from a fixture",
+    "high mechanical score means a good game"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "2000m.v3.visual-package.v1",
+  "packageId": "v3-foundation-visual-package",
+  "campaignId": "v3-foundation-fixture",
+  "scenarioId": "v3-foundation-scenario",
+  "taskSeed": 101,
+  "anonymized": true,
+  "mappingSealedBeforeReview": true,
+  "artifactDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "windows": [
+    {
+      "window": "early-game",
+      "seed": 1101,
+      "captureCommand": "cargo run --quiet --bin capture -- --seed 1101 --window early-game --out visual-package/A/early-game",
+      "screenshotRef": "visual-package/screenshots/A-early-game.png",
+      "replayRef": "visual-package/gifs/A-early-game.gif",
+      "frameMetadataRef": "visual-package/frames/A-early-game.frames.json",
+      "rubricMetadataRef": "visual-package/frames/A-early-game.rubric-metadata.json",
+      "fps": 30,
+      "frameCount": 120,
+      "inputSequenceRef": "visual-package/inputs/early-game.json",
+      "stateChecksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "frameChecksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "warnings": []
+    }
+  ],
+  "artifacts": {
+    "blindContactSheetRef": "visual-package/blind-contact-sheet.png",
+    "blindLabelMapRef": "visual-package/blind-label-map.json",
+    "screenshotsDirRef": "visual-package/screenshots",
+    "replaysDirRef": "visual-package/gifs",
+    "framesDirRef": "visual-package/frames"
+  },
+  "rubric": {
+    "rubricRef": "v3/VISUAL_RUBRIC.md",
+    "rubricRecordRef": "visual-package/rubric-record.json",
+    "reviewerCount": 1,
+    "ownerTasteSeparated": true
+  }
+}
