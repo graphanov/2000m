@@ -119,7 +119,7 @@ Needed before public results:
 
 ## Next design actions
 
-Before implementation, add or refine:
+The foundation slice adds draft versions of these artifacts plus schema fixtures. Before scorer behavior changes, refine them against review feedback and keep the protocol frozen for any campaign that uses them:
 
 1. `v3/2000m.driver.v3.md` — exact driver protocol.
 2. `v3/MECHANICAL_AC_SPEC.md` — concrete mechanical AC table.

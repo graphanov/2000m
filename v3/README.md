@@ -24,6 +24,12 @@ The benchmark remains independent and workflow-agnostic. It may test failure mod
 - [`EVIDENCE_AND_CLAIMS.md`](EVIDENCE_AND_CLAIMS.md) — evidence/governance requirements, claim ladder, and anti-rigging guardrails.
 - [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — staged path from this design packet to v3 scorer/harness implementation.
 - [`SPEC_GAPS_AND_DECISIONS.md`](SPEC_GAPS_AND_DECISIONS.md) — OMX advisory review gaps to resolve before executable v3 scorer work.
+- [`2000m.driver.v3.md`](2000m.driver.v3.md) — draft exact v3 driver protocol.
+- [`MECHANICAL_AC_SPEC.md`](MECHANICAL_AC_SPEC.md) — draft mechanical acceptance-criteria table.
+- [`VISUAL_RUBRIC.md`](VISUAL_RUBRIC.md) — draft native capture and blind-review rubric.
+- [`SCORING_MODEL.md`](SCORING_MODEL.md) — draft separated-track scoring and blocker model.
+- [`SANDBOX_AND_RESOURCE_POLICY.md`](SANDBOX_AND_RESOURCE_POLICY.md) — draft scorer sandbox/resource policy.
+- `*.schema.json` plus `examples/valid/` and `examples/invalid/` — v3 schema foundation fixtures validated by `scripts/validate_v3_schemas.py`.
 
 ## Claim boundary
 

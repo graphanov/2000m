@@ -1,0 +1,408 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v3/result.schema.json",
+  "title": "2000m v3 separated-track result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "scenarioId",
+    "taskSeed",
+    "laneId",
+    "entrant",
+    "protocolFreeze",
+    "mechanical",
+    "visual",
+    "workflow",
+    "evidence",
+    "claimBoundary",
+    "warnings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v3.result.v1"
+    },
+    "campaignId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "taskSeed": {
+      "type": "integer"
+    },
+    "laneId": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_-]{0,15}$"
+    },
+    "entrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "runtime",
+        "processType"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processType": {
+          "type": "string",
+          "enum": [
+            "naked-model",
+            "workflow-system",
+            "scripted-agent",
+            "human-operated",
+            "other"
+          ]
+        }
+      }
+    },
+    "protocolFreeze": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "changedAfterLiveResults",
+        "scorerMutationObserved",
+        "calibrationOnlyIfChanged"
+      ],
+      "properties": {
+        "changedAfterLiveResults": {
+          "type": "boolean"
+        },
+        "scorerMutationObserved": {
+          "type": "boolean"
+        },
+        "calibrationOnlyIfChanged": {
+          "type": "boolean"
+        }
+      }
+    },
+    "mechanical": {
+      "$ref": "#/$defs/mechanicalResult"
+    },
+    "visual": {
+      "$ref": "#/$defs/visualResult"
+    },
+    "workflow": {
+      "$ref": "#/$defs/workflowResult"
+    },
+    "evidence": {
+      "$ref": "#/$defs/evidenceResult"
+    },
+    "claimBoundary": {
+      "type": "string",
+      "enum": [
+        "calibration-only",
+        "no-support",
+        "directional-signal",
+        "repeatable-workflow-value-support-candidate",
+        "public-benchmark-support"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "mechanicalResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ranked",
+        "protocolVersion",
+        "passCount",
+        "totalAcs",
+        "determinism",
+        "failedAcs",
+        "hiddenChallengeSummary",
+        "regressionSummary",
+        "resultJsonRef"
+      ],
+      "properties": {
+        "ranked": {
+          "type": "boolean"
+        },
+        "protocolVersion": {
+          "const": "2000m.driver.v3"
+        },
+        "passCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalAcs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "compositeScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "determinism": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pass"
+          ],
+          "properties": {
+            "pass": {
+              "type": "boolean"
+            },
+            "details": {
+              "type": "string"
+            }
+          }
+        },
+        "failedAcs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "hiddenChallengeSummary": {
+          "type": "string"
+        },
+        "regressionSummary": {
+          "type": "string"
+        },
+        "resultJsonRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "visualResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ranked",
+        "blockReason",
+        "visualPackageRef",
+        "captureDeterminism",
+        "rubricRecordRef"
+      ],
+      "properties": {
+        "ranked": {
+          "type": "boolean"
+        },
+        "blockReason": {
+          "type": "string",
+          "enum": [
+            "none",
+            "missing-native-capture-or-playable-surface",
+            "capture-command-failed",
+            "missing-capture-metadata",
+            "non-deterministic-capture",
+            "visual-seeds-mutated-after-live-results",
+            "blind-label-map-opened-before-rating",
+            "private-local-ref-in-public-record",
+            "asset-boundary-failed"
+          ]
+        },
+        "visualPackageRef": {
+          "type": "string"
+        },
+        "captureDeterminism": {
+          "type": "string",
+          "enum": [
+            "passed",
+            "failed",
+            "not-run",
+            "blocked"
+          ]
+        },
+        "rubricRecordRef": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "ranked": {
+                "const": true
+              }
+            },
+            "required": [
+              "ranked"
+            ]
+          },
+          "then": {
+            "properties": {
+              "blockReason": {
+                "const": "none"
+              },
+              "visualPackageRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "captureDeterminism": {
+                "const": "passed"
+              },
+              "rubricRecordRef": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "visualPackageRef",
+              "rubricRecordRef"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "blockReason": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "blockReason"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ranked": {
+                "const": true
+              },
+              "visualPackageRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "captureDeterminism": {
+                "const": "passed"
+              },
+              "rubricRecordRef": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "visualPackageRef",
+              "rubricRecordRef"
+            ]
+          }
+        }
+      ]
+    },
+    "workflowResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contextWipeRecoveryScore",
+        "feedbackDecisionScore",
+        "regressionProtectionScore",
+        "impossibleRequirementHandlingScore",
+        "handoffScore",
+        "finalRecommendation",
+        "rationaleRefs"
+      ],
+      "properties": {
+        "contextWipeRecoveryScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "feedbackDecisionScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "regressionProtectionScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "impossibleRequirementHandlingScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "handoffScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "finalRecommendation": {
+          "type": "string",
+          "enum": [
+            "continue",
+            "stop",
+            "redesign",
+            "inspect_scorer"
+          ]
+        },
+        "rationaleRefs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evidenceResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replayable",
+        "publicSafe",
+        "privateRefsBlocked",
+        "compactSummaryRef",
+        "requiredRefsMissing",
+        "claimBoundary"
+      ],
+      "properties": {
+        "replayable": {
+          "type": "boolean"
+        },
+        "publicSafe": {
+          "type": "boolean"
+        },
+        "privateRefsBlocked": {
+          "type": "boolean"
+        },
+        "compactSummaryRef": {
+          "type": "string"
+        },
+        "requiredRefsMissing": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "claimBoundary": {
+          "type": "string",
+          "enum": [
+            "calibration-only",
+            "no-support",
+            "directional-signal",
+            "repeatable-workflow-value-support-candidate",
+            "public-benchmark-support"
+          ]
+        }
+      }
+    }
+  }
+}

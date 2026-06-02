@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v3/manifest.schema.json",
+  "title": "2000m v3 produced-artifact manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "protocolVersion",
+    "language",
+    "driver",
+    "assets"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v3.manifest.v1"
+    },
+    "protocolVersion": {
+      "const": "2000m.driver.v3"
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "rust"
+      ]
+    },
+    "driver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "args"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "cwd": {
+          "type": "string",
+          "description": "Optional repo-relative working directory. Public manifests must not use private/local absolute paths."
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "args",
+        "outputs",
+        "metadata"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "screenshot",
+            "replay",
+            "frames",
+            "rubricMetadata"
+          ],
+          "properties": {
+            "screenshot": {
+              "type": "string",
+              "minLength": 1
+            },
+            "replay": {
+              "type": "string",
+              "minLength": 1
+            },
+            "frames": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rubricMetadata": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "placeholders",
+            "deterministicForSameSeedWindowAndArtifact"
+          ],
+          "properties": {
+            "placeholders": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "{seed}",
+                  "{window}",
+                  "{out}"
+                ]
+              }
+            },
+            "deterministicForSameSeedWindowAndArtifact": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "playable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "command",
+        "args",
+        "urlOrPath"
+      ],
+      "properties": {
+        "command": {
+          "type": "string",
+          "minLength": 1
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "urlOrPath": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "license",
+        "attestation"
+      ],
+      "properties": {
+        "license": {
+          "type": "string",
+          "enum": [
+            "original-homage-assets-only",
+            "no-assets",
+            "other-publicly-licensed-assets"
+          ]
+        },
+        "attestation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

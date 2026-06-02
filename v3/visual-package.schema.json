@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v3/visual-package.schema.json",
+  "title": "2000m v3 visual package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "packageId",
+    "campaignId",
+    "scenarioId",
+    "taskSeed",
+    "anonymized",
+    "mappingSealedBeforeReview",
+    "artifactDigest",
+    "windows",
+    "artifacts",
+    "rubric"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v3.visual-package.v1"
+    },
+    "packageId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "campaignId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "scenarioId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "taskSeed": {
+      "type": "integer"
+    },
+    "anonymized": {
+      "type": "boolean"
+    },
+    "mappingSealedBeforeReview": {
+      "type": "boolean"
+    },
+    "artifactDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "windows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/captureWindow"
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "blindContactSheetRef",
+        "blindLabelMapRef",
+        "screenshotsDirRef",
+        "replaysDirRef",
+        "framesDirRef"
+      ],
+      "properties": {
+        "blindContactSheetRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blindLabelMapRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screenshotsDirRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replaysDirRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "framesDirRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "rubric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rubricRef",
+        "rubricRecordRef",
+        "reviewerCount",
+        "ownerTasteSeparated"
+      ],
+      "properties": {
+        "rubricRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rubricRecordRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewerCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ownerTasteSeparated": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "captureWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window",
+        "seed",
+        "captureCommand",
+        "screenshotRef",
+        "replayRef",
+        "frameMetadataRef",
+        "rubricMetadataRef",
+        "fps",
+        "frameCount",
+        "inputSequenceRef",
+        "stateChecksum",
+        "frameChecksum",
+        "warnings"
+      ],
+      "properties": {
+        "window": {
+          "type": "string",
+          "enum": [
+            "early-game",
+            "mid-run-obstacle-field",
+            "ramp-style-sequence",
+            "monster-pressure",
+            "post-feedback-rerun"
+          ]
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "captureCommand": {
+          "type": "string",
+          "minLength": 1
+        },
+        "screenshotRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "replayRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "frameMetadataRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "rubricMetadataRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "frameCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "inputSequenceRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stateChecksum": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "frameChecksum": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

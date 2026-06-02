@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v3/campaign.schema.json",
+  "title": "2000m v3 campaign freeze contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "title",
+    "status",
+    "protocolFreeze",
+    "controls",
+    "lanes",
+    "pairs",
+    "claimBoundary",
+    "bannedClaims"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v3.campaign.v1"
+    },
+    "campaignId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "frozen",
+        "calibration",
+        "pilot",
+        "complete"
+      ]
+    },
+    "protocolFreeze": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "freezeBeforeLiveResults",
+        "noProtocolMutationAfterLiveResults",
+        "mutationAfterLiveResultsPolicy",
+        "benchmarkCommit",
+        "driverProtocolRef",
+        "mechanicalAcSpecRef",
+        "visualRubricRef",
+        "scoringModelRef",
+        "sandboxPolicyRef",
+        "scenarioRefs",
+        "feedbackPacketRef",
+        "decisionRulesRef",
+        "captureWindows",
+        "visualSeeds",
+        "hiddenChallengePolicy"
+      ],
+      "properties": {
+        "freezeBeforeLiveResults": {
+          "type": "boolean"
+        },
+        "noProtocolMutationAfterLiveResults": {
+          "type": "boolean"
+        },
+        "mutationAfterLiveResultsPolicy": {
+          "type": "string",
+          "enum": [
+            "affected-runs-calibration-only"
+          ]
+        },
+        "benchmarkCommit": {
+          "type": "string",
+          "minLength": 7
+        },
+        "driverProtocolRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mechanicalAcSpecRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visualRubricRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scoringModelRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sandboxPolicyRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenarioRefs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "feedbackPacketRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decisionRulesRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "captureWindows": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "early-game",
+              "mid-run-obstacle-field",
+              "ramp-style-sequence",
+              "monster-pressure",
+              "post-feedback-rerun"
+            ]
+          }
+        },
+        "visualSeeds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer"
+          }
+        },
+        "hiddenChallengePolicy": {
+          "type": "string",
+          "enum": [
+            "declared-public-hidden-split",
+            "public-only-calibration",
+            "none"
+          ]
+        }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "runtime",
+        "generationCap",
+        "promptBudget",
+        "scorerFeedbackBudget",
+        "reviewerFeedbackBudget",
+        "contextWipePhase",
+        "samePromptBudget",
+        "sameFeedbackPackets",
+        "sameScorerDiagnostics",
+        "sameVisualSeeds",
+        "sameReviewerBudget",
+        "wallClockPolicy",
+        "networkPolicy"
+      ],
+      "properties": {
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "runtime": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generationCap": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "promptBudget": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "scorerFeedbackBudget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reviewerFeedbackBudget": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contextWipePhase": {
+          "type": "string",
+          "enum": [
+            "after-first-scored-generation",
+            "disabled-for-calibration"
+          ]
+        },
+        "samePromptBudget": {
+          "type": "boolean"
+        },
+        "sameFeedbackPackets": {
+          "type": "boolean"
+        },
+        "sameScorerDiagnostics": {
+          "type": "boolean"
+        },
+        "sameVisualSeeds": {
+          "type": "boolean"
+        },
+        "sameReviewerBudget": {
+          "type": "boolean"
+        },
+        "wallClockPolicy": {
+          "type": "string",
+          "enum": [
+            "diagnostic-only",
+            "controlled-budget",
+            "not-used"
+          ]
+        },
+        "networkPolicy": {
+          "type": "string",
+          "enum": [
+            "disabled-during-scoring",
+            "allowlisted-before-freeze",
+            "not-used"
+          ]
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/lane"
+      }
+    },
+    "pairs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/pair"
+      }
+    },
+    "claimBoundary": {
+      "type": "string",
+      "enum": [
+        "calibration-only",
+        "no-support",
+        "directional-signal",
+        "repeatable-workflow-value-support-candidate",
+        "public-benchmark-support"
+      ]
+    },
+    "bannedClaims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "laneId",
+        "label",
+        "processType",
+        "enabled",
+        "allowedTools",
+        "forbiddenAdvantages",
+        "requiredEvidence"
+      ],
+      "properties": {
+        "laneId": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_-]{0,15}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processType": {
+          "type": "string",
+          "enum": [
+            "naked-model",
+            "workflow-system",
+            "scripted-agent",
+            "human-operated",
+            "other"
+          ]
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "allowedTools": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbiddenAdvantages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requiredEvidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pairId",
+        "taskSeed",
+        "scenarioRef",
+        "enabledLanes",
+        "notes"
+      ],
+      "properties": {
+        "pairId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+        },
+        "taskSeed": {
+          "type": "integer"
+        },
+        "scenarioRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabledLanes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_-]{0,15}$"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
