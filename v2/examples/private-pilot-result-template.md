@@ -32,6 +32,7 @@ Use this template for each `paired-private-pilot-v1` pair. Keep repo artifacts p
 - [ ] Same generation cap in both lanes.
 - [ ] Same prompt budget in both lanes.
 - [ ] Same scorer feedback budget in both lanes.
+- [ ] Same workspace-local detailed scorer feedback packet visibility before the next generation, including exact diagnostics.
 - [ ] Same reviewer feedback budget in both lanes, including equal unused budget if no reviewer packet is used.
 - [ ] Same context-wipe timing.
 - [ ] Same visual seeds and capture windows.
@@ -65,6 +66,7 @@ Process boundary: no `.osc` state, Open Scaffold plans, run packets, eval envelo
 - Runtime stdout/stderr refs: `<refs>`
 - Build/test/scorer output refs: `<refs>`
 - v1 conformance JSON refs: `<refs>`
+- Workspace-local feedback parity packet refs: `<trajectory/generation-XX/{v1-conformance.json,score.log,scorer-feedback.md,feedback-manifest.json}>`
 - Plain trajectory ref: `<ref>`
 - Handoff summary ref: `<ref>`
 - Visual package refs: `<refs or missing reason>`
@@ -95,6 +97,7 @@ Process boundary: Open Scaffold is allowed as a ledger/analyze loop only. Do not
 - Runtime stdout/stderr refs: `<refs>`
 - Build/test/scorer output refs: `<refs>`
 - v1 conformance JSON refs: `<refs>`
+- Workspace-local feedback parity packet refs: `<trajectory/generation-XX/{v1-conformance.json,score.log,scorer-feedback.md,feedback-manifest.json}>`
 - Handoff summary ref: `<ref>`
 - Visual package refs: `<refs or missing reason>`
 - v2 run record ref: `<ref>`
@@ -115,6 +118,22 @@ Save v1 conformance JSON for every scored generation. The v2 scorer consumes onl
 | Scorer feedback packet | `phases[].feedbackResponses[]` |
 | Handoff summary | context-wipe phase output `handoff-summary` |
 | Stop/continue/redesign/inspect decision | `finalRecommendation.decision`, final phase output `stop-recommendation` |
+
+## Feedback parity guard report
+
+For each scored generation before the next generation starts, run the parity checker against the private run root and save or reference the result:
+
+```bash
+python3 scripts/check_v2_feedback_parity.py <private-run-root> --generations <generation-number> --json-out <private-run-root>/records/feedback-parity-generation-XX.json
+```
+
+Required refs:
+
+- generation 1 parity report: `<ref>`
+- generation 2 parity report: `<ref or not applicable>`
+- generation 3 parity report: `<ref or final-only check>`
+
+If the checker fails for any enabled lane, mark the affected run invalid/calibration-only for lane comparison.
 
 ## v2 run-record skeleton
 
