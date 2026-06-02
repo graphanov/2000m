@@ -43,6 +43,8 @@ def lane_key(value: str) -> str:
 def private_pair_dirs(run_root: Path) -> list[Path]:
     roots = [run_root, run_root / "private-pilot"]
     pair_dirs: dict[str, Path] = {}
+    if run_root.is_dir() and re.fullmatch(r"pilot-seed-\d+", run_root.name):
+        pair_dirs[run_root.resolve().as_posix()] = run_root
     for root in roots:
         for path in sorted(root.glob("pilot-seed-*")):
             if path.is_dir():
