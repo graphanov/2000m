@@ -102,13 +102,16 @@ Process boundary: Open Scaffold is allowed as a ledger/analyze loop only. Do not
 
 ## v1 conformance to v2 run-record mapping
 
+Save v1 conformance JSON for every scored generation. The v2 scorer consumes only the single JSON named in `artifact.v1ConformanceJson`, so pin that field to the final selected comparison generation for the lane: latest scored generation at cap, or latest scored generation at an explicit early `stop`, `redesign`, or `inspect_scorer` recommendation. Apply the same rule to both lanes and keep non-pinned generation JSONs as evidence/trajectory refs.
+
 | v1/scorer artifact | v2 run-record field |
 |---|---|
 | Produced artifact repo/ref | `artifact.repoOrPath`, phase output `artifact-ref` |
 | Produced artifact commit/digest | `artifact.commitOrDigest` |
-| Build command | `artifact.buildCommand`, phase output `build-command` |
-| Score command | `artifact.scoreCommand`, phase output `score-command` |
-| v1 conformance JSON ref | `artifact.v1ConformanceJson`, phase output `conformance-json`, evidence kind `conformance-json` |
+| Build command for pinned generation | `artifact.buildCommand`, phase output `build-command` |
+| Score command for pinned generation | `artifact.scoreCommand`, phase output `score-command` |
+| Pinned v1 conformance JSON ref | `artifact.v1ConformanceJson`, phase output `conformance-json`, evidence kind `conformance-json` |
+| Other generation v1 conformance JSON refs | evidence refs labeled `conformance-json`; do not overwrite the pinned artifact input |
 | Scorer feedback packet | `phases[].feedbackResponses[]` |
 | Handoff summary | context-wipe phase output `handoff-summary` |
 | Stop/continue/redesign/inspect decision | `finalRecommendation.decision`, final phase output `stop-recommendation` |
@@ -130,25 +133,25 @@ Fill this shape for each lane after the lane evidence is complete. Use public-sa
   "artifact": {
     "repoOrPath": "<public-safe artifact ref>",
     "commitOrDigest": "<commit or digest>",
-    "buildCommand": "<build command>",
-    "scoreCommand": "<score command>",
-    "v1ConformanceJson": "<public-safe v1 conformance JSON ref>"
+    "buildCommand": "<pinned generation build command>",
+    "scoreCommand": "<pinned generation score command>",
+    "v1ConformanceJson": "<public-safe pinned v1 conformance JSON ref>"
   },
   "phases": [
     {
       "phaseId": "initial-build",
       "outputs": {
         "artifact-ref": "<artifact ref>",
-        "build-command": "<build command>",
-        "score-command": "<score command>",
-        "conformance-json": "<v1 conformance JSON ref>"
+        "build-command": "<pinned generation build command>",
+        "score-command": "<pinned generation score command>",
+        "conformance-json": "<pinned v1 conformance JSON ref>"
       }
     },
     {
       "phaseId": "scorer-feedback",
       "outputs": {
         "feedback-response": "<summary ref>",
-        "conformance-json": "<latest v1 conformance JSON ref>",
+        "conformance-json": "<latest scored or pinned v1 conformance JSON ref>",
         "evidence-ref": "<feedback evidence ref>"
       },
       "feedbackResponses": [

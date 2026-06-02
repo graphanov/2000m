@@ -338,15 +338,26 @@ Use [`examples/private-pilot-result-template.md`](examples/private-pilot-result-
 
 ## How v1 conformance feeds v2 run records
 
-For every scored generation:
+Save v1 scorer JSON for every scored generation, but use only one predeclared JSON in the v2 run record's `artifact.v1ConformanceJson` field.
 
-1. Run the neutral v1 scorer and save machine JSON.
-2. Reference that JSON in the v2 run record under `artifact.v1ConformanceJson`.
-3. Copy the exact score command into `artifact.scoreCommand` and phase output `score-command`.
-4. Copy the conformance JSON ref into phase output `conformance-json`.
-5. Record scorer feedback decisions under `feedbackResponses`.
-6. Include the conformance JSON as an evidence ref with kind `conformance-json`.
-7. Run the v2 scorer against the completed run record to produce `v2-result.json`.
+Default selection rule for this private pilot:
+
+- `artifact.v1ConformanceJson` points to the final selected comparison generation for that lane.
+- The final selected generation is the latest scored generation at the generation cap, or the latest scored generation at an explicitly recorded early `stop`, `redesign`, or `inspect_scorer` recommendation.
+- Apply the same selection rule to Lane A and Lane B before comparing.
+- Do not change to a best-looking or more favorable generation after seeing lane outcomes.
+- Keep all other generation conformance JSON files as evidence refs and trajectory inputs, not as the artifact-quality input consumed by the v2 scorer.
+
+For the pinned v2 artifact input:
+
+1. Run the neutral v1 scorer and save machine JSON for each scored generation.
+2. Select the pinned final comparison JSON using the rule above.
+3. Reference the pinned JSON in the v2 run record under `artifact.v1ConformanceJson`.
+4. Copy the pinned generation's exact score command into `artifact.scoreCommand` and phase output `score-command`.
+5. Copy the pinned conformance JSON ref into phase output `conformance-json`.
+6. Record scorer feedback decisions under `feedbackResponses`.
+7. Include every generation conformance JSON as an evidence ref with kind `conformance-json`, labeling which one is pinned for v2 scoring.
+8. Run the v2 scorer against the completed run record to produce `v2-result.json`.
 
 Do not rewrite v1 conformance JSON to improve a narrative. If a scorer input is private/local-only, the v2 scorer should rank-block it rather than silently accepting it.
 
