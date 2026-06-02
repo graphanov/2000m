@@ -11,6 +11,7 @@ v2 exists because v0 and v1 mostly measure the final produced game. They are use
 - [`DESIGN.md`](DESIGN.md) — design brief, neutrality rules, scenario phases, scoring model, and implementation plan.
 - [`EXPERIMENT_PROTOCOL.md`](EXPERIMENT_PROTOCOL.md) — frozen paired-campaign protocol, lane definitions, controls, freeze rules, and claim ladder.
 - [`VISUAL_ARTIFACT_TRACK.md`](VISUAL_ARTIFACT_TRACK.md) — screenshot/GIF/replay, fixed-seed, rubric, blind-review, and visual-feature requirements.
+- [`PRIVATE_PILOT_AB_RUNBOOK.md`](PRIVATE_PILOT_AB_RUNBOOK.md) — Phase 1/Phase 2 private A/B pilot runbook, lane rules, evidence recording plan, and Phase 2 bootstrap template.
 - [`scenario.schema.json`](scenario.schema.json) — draft machine-readable scenario contract for v2 fixtures.
 - [`run-record.schema.json`](run-record.schema.json) — draft entrant-submitted run record contract for v2 scoring.
 - [`result.schema.json`](result.schema.json) — machine-readable scorer result contract for rendered result rows.

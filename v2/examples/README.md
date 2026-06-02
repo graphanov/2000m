@@ -32,6 +32,9 @@ superior.
   next private pilot. It freezes Lane A as the naked model baseline, Lane B as
   the Open Scaffold ledger/analyze lane, and Lane C as disabled until a real
   controller exists. It is a protocol fixture, not a completed run result.
+- `private-pilot-result-template.md` — Phase 2 recording template for per-pair,
+  per-lane generation evidence, v1-to-v2 run-record mapping, visual package
+  refs, context-wipe handoff, and bounded decision rules.
 
 ## Stage 1 neutral smoke runner
 
@@ -57,7 +60,10 @@ python3 scripts/run_v2_stage1_smokes.py --visual-out <empty-output-dir>
 ```bash
 mkdir -p v2/examples/results
 for name in good weak-ranked missing-output private-path wrong-stop; do
-  cargo run --quiet -p m2000-v2-conformance --     v2/examples/workflow-resilience-pilot.scenario.json     v2/examples/pilot-${name}-run-record.json     --json-out v2/examples/results/pilot-${name}-result.json
+  cargo run --quiet -p m2000-v2-conformance -- \
+    v2/examples/workflow-resilience-pilot.scenario.json \
+    v2/examples/pilot-${name}-run-record.json \
+    --json-out v2/examples/results/pilot-${name}-result.json
 done
 python3 scripts/render_results.py --check
 ```
