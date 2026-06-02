@@ -33,6 +33,25 @@ superior.
   the Open Scaffold ledger/analyze lane, and Lane C as disabled until a real
   controller exists. It is a protocol fixture, not a completed run result.
 
+## Stage 1 neutral smoke runner
+
+The canonical Stage 1 pre-pilot smoke command is:
+
+```bash
+python3 scripts/run_v2_stage1_smokes.py
+```
+
+It regenerates the scorer-result fixtures to a temp directory, checks them
+against the committed JSON, validates the result spine and campaign fixture, and
+creates a deterministic visual/replay package from the fixed campaign seeds. The
+visual package is packaging evidence only; it is not a visual-quality judgment.
+
+To inspect the package, write it to an empty directory:
+
+```bash
+python3 scripts/run_v2_stage1_smokes.py --visual-out <empty-output-dir>
+```
+
 ## Generate the result fixtures
 
 ```bash

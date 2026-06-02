@@ -1,6 +1,6 @@
 # 2000m v2 paired campaign protocol
 
-Status: protocol-freeze candidate. Do not run live contender trials from this protocol until the protocol PR is merged or explicitly marked calibration-only.
+Status: frozen on main for Stage 1 calibration and later private paired pilots. Stage 1 smoke outputs are calibration-only; do not treat them as live contender results or workflow-value proof.
 
 ## Purpose
 
