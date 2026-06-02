@@ -46,6 +46,7 @@ INVALID_FIXTURES = {
     V3 / "examples" / "invalid" / "result-unsupported-claim.json": "unsupported claim",
     V3 / "examples" / "invalid" / "run-record-invalid-enum.json": "enum",
     V3 / "examples" / "invalid" / "result-mutated-frozen-protocol.json": "frozen protocol mutation",
+    V3 / "examples" / "invalid" / "result-ranked-visual-missing-evidence.json": "ranked visual result",
 }
 
 PRIVATE_MARKERS = (
@@ -285,6 +286,13 @@ def validate_semantics(data: dict[str, Any], schema_version: str) -> None:
         require(freeze["calibrationOnlyIfChanged"] is True, "changed protocol must force calibration-only handling")
         require(data["claimBoundary"] != "public-benchmark-support", "foundation fixtures must not claim public benchmark support")
         require(data["evidence"]["claimBoundary"] == data["claimBoundary"], "evidence claimBoundary must match result claimBoundary")
+        visual = data["visual"]
+        if visual["ranked"] is True or visual["blockReason"] == "none":
+            require(visual["ranked"] is True, "ranked visual result must set visual.ranked=true when blockReason is none")
+            require(visual["blockReason"] == "none", "ranked visual result must use blockReason none")
+            require(bool(visual["visualPackageRef"].strip()), "ranked visual result requires non-empty visualPackageRef")
+            require(bool(visual["rubricRecordRef"].strip()), "ranked visual result requires non-empty rubricRecordRef")
+            require(visual["captureDeterminism"] == "passed", "ranked visual result requires captureDeterminism passed")
     elif schema_version == "2000m.v3.visual-package.v1":
         require(data["anonymized"] is True, "visual package must be anonymized before blind review")
         require(data["mappingSealedBeforeReview"] is True, "blind label map must be sealed before review")

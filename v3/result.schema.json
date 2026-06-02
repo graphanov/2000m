@@ -233,7 +233,77 @@
           "minimum": 0,
           "maximum": 100
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "ranked": {
+                "const": true
+              }
+            },
+            "required": [
+              "ranked"
+            ]
+          },
+          "then": {
+            "properties": {
+              "blockReason": {
+                "const": "none"
+              },
+              "visualPackageRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "captureDeterminism": {
+                "const": "passed"
+              },
+              "rubricRecordRef": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "visualPackageRef",
+              "rubricRecordRef"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "blockReason": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "blockReason"
+            ]
+          },
+          "then": {
+            "properties": {
+              "ranked": {
+                "const": true
+              },
+              "visualPackageRef": {
+                "type": "string",
+                "minLength": 1
+              },
+              "captureDeterminism": {
+                "const": "passed"
+              },
+              "rubricRecordRef": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "visualPackageRef",
+              "rubricRecordRef"
+            ]
+          }
+        }
+      ]
     },
     "workflowResult": {
       "type": "object",
