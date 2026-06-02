@@ -8,7 +8,7 @@
   },
   "evidence": {
     "claimBoundary": "calibration-only",
-    "compactSummaryRef": "v3/examples/workflow/evidence/summary.complete-ranked.md",
+    "compactSummaryRef": "v3/examples/workflow/evidence/summary.complete.md",
     "privateRefsBlocked": false,
     "publicSafe": true,
     "replayable": true,

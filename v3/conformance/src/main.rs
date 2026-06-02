@@ -7,7 +7,10 @@ use std::error::Error;
 use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::process::{Child, ChildStdin, Command, Stdio};
+use std::sync::mpsc::{self, Receiver};
+use std::thread;
+use std::time::Duration;
 
 const PROTOCOL_VERSION: &str = "2000m.driver.v3";
 const RESULT_SCHEMA_VERSION: &str = "2000m.v3.result.v1";
@@ -194,7 +197,7 @@ struct CommandSpec {
     #[serde(default)]
     cwd: Option<String>,
     #[serde(default, rename = "timeoutSeconds")]
-    _timeout_seconds: Option<u64>,
+    timeout_seconds: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -376,7 +379,8 @@ struct ParsedArgs {
 struct DriverClient {
     child: Child,
     stdin: ChildStdin,
-    stdout: BufReader<ChildStdout>,
+    response_rx: Receiver<Result<String, String>>,
+    timeout: Duration,
     next_request: u64,
 }
 
@@ -516,10 +520,32 @@ impl Harness {
             .map_err(|err| format!("failed to spawn driver: {err}"))?;
         let stdin = child.stdin.take().ok_or("driver stdin not available")?;
         let stdout = child.stdout.take().ok_or("driver stdout not available")?;
+        let (response_tx, response_rx) = mpsc::channel();
+        let _reader_thread = thread::spawn(move || {
+            let mut reader = BufReader::new(stdout);
+            loop {
+                let mut line = String::new();
+                match reader.read_line(&mut line) {
+                    Ok(0) => break,
+                    Ok(_) => {
+                        if response_tx.send(Ok(line)).is_err() {
+                            break;
+                        }
+                    }
+                    Err(err) => {
+                        let _ = response_tx.send(Err(format!("failed to read response: {err}")));
+                        break;
+                    }
+                }
+            }
+        });
+        let timeout =
+            Duration::from_secs(self.manifest.driver.timeout_seconds.unwrap_or(30).max(1));
         Ok(DriverClient {
             child,
             stdin,
-            stdout: BufReader::new(stdout),
+            response_rx,
+            timeout,
             next_request: 0,
         })
     }
@@ -556,14 +582,20 @@ impl DriverClient {
         self.stdin
             .flush()
             .map_err(|err| format!("failed to flush request: {err}"))?;
-        let mut response_line = String::new();
-        let read = self
-            .stdout
-            .read_line(&mut response_line)
-            .map_err(|err| format!("failed to read response: {err}"))?;
-        if read == 0 {
-            return Err("driver closed stdout before response".to_string());
-        }
+        let response_line = match self.response_rx.recv_timeout(self.timeout) {
+            Ok(Ok(line)) => line,
+            Ok(Err(err)) => return Err(err),
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                let _ = self.child.kill();
+                return Err(format!(
+                    "driver response timeout after {}s",
+                    self.timeout.as_secs()
+                ));
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                return Err("driver closed stdout before response".to_string());
+            }
+        };
         let response: Value = serde_json::from_str(response_line.trim_end()).map_err(|err| {
             format!("driver emitted invalid JSON response: {err}: {response_line}")
         })?;
@@ -1394,5 +1426,19 @@ mod tests {
         let result = score(&harness, None);
         assert!(!result.mechanical.ranked);
         assert!(result.mechanical.failed_acs.contains(&"M06".to_string()));
+    }
+
+    #[test]
+    fn driver_timeout_seconds_is_enforced() {
+        let manifest = default_fixture_set_path()
+            .parent()
+            .unwrap()
+            .join("timeout-artifact/2000m.v3.json");
+        let harness = Harness::load(manifest, default_fixture_set_path()).unwrap();
+        let mut client = harness.spawn_driver().unwrap();
+        let started = std::time::Instant::now();
+        let err = client.send("init", json!({ "seed": 1 })).unwrap_err();
+        assert!(err.contains("timeout"), "{err}");
+        assert!(started.elapsed() < Duration::from_secs(3));
     }
 }

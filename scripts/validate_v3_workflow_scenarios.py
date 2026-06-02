@@ -62,6 +62,48 @@ def resolve(ref: str) -> Path:
     return ROOT / ref
 
 
+def ref_path(ref: str) -> Path:
+    return resolve(ref.split("#", 1)[0])
+
+
+def require_public_ref_exists(ref: str, label: str, *, allow_empty: bool = False) -> None:
+    if not ref:
+        require(allow_empty, f"{label} is empty")
+        return
+    path = ref_path(ref)
+    require(path.exists(), f"{label} points at missing committed file: {ref}")
+
+
+def validate_result_refs(result: dict[str, Any], fixture_kind: str) -> None:
+    evidence = result["evidence"]
+    missing = set(evidence.get("requiredRefsMissing", []))
+    if evidence.get("publicSafe") is True:
+        require_public_ref_exists(evidence["compactSummaryRef"], f"{fixture_kind} compactSummaryRef")
+
+    visual = result["visual"]
+    if visual.get("ranked") is True:
+        require_public_ref_exists(visual["visualPackageRef"], f"{fixture_kind} visualPackageRef")
+        require_public_ref_exists(visual["rubricRecordRef"], f"{fixture_kind} rubricRecordRef")
+    else:
+        if visual.get("visualPackageRef"):
+            require_public_ref_exists(visual["visualPackageRef"], f"{fixture_kind} visualPackageRef")
+        else:
+            require("visualPackageRef" in missing, f"{fixture_kind} must list missing visualPackageRef when visual package is absent")
+        if visual.get("rubricRecordRef"):
+            require_public_ref_exists(visual["rubricRecordRef"], f"{fixture_kind} rubricRecordRef")
+
+
+def validate_run_record_refs(run_record: dict[str, Any], fixture_kind: str) -> None:
+    for phase in run_record.get("phases", []):
+        for item in phase.get("evidenceRefs", []):
+            require_public_ref_exists(item["ref"], f"{fixture_kind} phase evidence ref")
+    visual = run_record["visual"]
+    if visual.get("captureCommandResultRef"):
+        require_public_ref_exists(visual["captureCommandResultRef"], f"{fixture_kind} captureCommandResultRef")
+    if visual.get("ranked") is True:
+        require_public_ref_exists(visual["visualPackageRef"], f"{fixture_kind} run-record visualPackageRef")
+
+
 def validate_scenario(path: Path, validator: Any) -> dict[str, Any]:
     scenario = load_json(path)
     schema = load_json(SCENARIO_SCHEMA)
@@ -95,6 +137,7 @@ def validate_result_tracks(result: dict[str, Any], fixture_kind: str) -> None:
     if fixture_kind == "wrong-stop-decision":
         require(result["workflow"]["finalRecommendation"] == "continue", "wrong stop fixture must encode wrong continue decision")
         require(result["workflow"]["impossibleRequirementHandlingScore"] < 50, "wrong stop fixture must lower impossible/stale handling score")
+    validate_result_refs(result, fixture_kind)
 
 
 def validate_run_record(run_record: dict[str, Any], fixture_kind: str) -> None:
@@ -106,6 +149,7 @@ def validate_run_record(run_record: dict[str, Any], fixture_kind: str) -> None:
         reviewer = next(phase for phase in run_record["phases"] if phase["kind"] == "reviewer-injection")
         decisions = {item["decision"] for item in reviewer.get("feedbackDecisions", [])}
         require(decisions == {"accepted"}, "wrong feedback fixture should blindly accept every reviewer item")
+    validate_run_record_refs(run_record, fixture_kind)
 
 
 def main() -> int:

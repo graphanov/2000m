@@ -1,0 +1,4 @@
+{
+  "status": "blocked",
+  "reason": "missing-native-capture-or-playable-surface"
+}
