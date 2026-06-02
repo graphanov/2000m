@@ -88,6 +88,15 @@ def relative_or_str(path: Path, base: Path) -> str:
         return str(path)
 
 
+def same_file_content(left: Path, right: Path) -> bool:
+    if not left.exists() or not right.exists():
+        return False
+    try:
+        return left.read_bytes() == right.read_bytes()
+    except OSError:
+        return False
+
+
 def check_generation(run_root: Path, seed: int, lane: str, generation: int, require_workspace_copy: bool) -> dict[str, Any]:
     lane_dir = run_root / "records" / f"pilot-seed-{seed}" / f"lane-{lane}" / f"generation-{generation:02d}"
     workspace_dir = run_root / "workspaces" / f"2000m-private-pilot-seed-{seed}-lane-{lane}" / "trajectory" / f"generation-{generation:02d}"
@@ -108,6 +117,10 @@ def check_generation(run_root: Path, seed: int, lane: str, generation: int, requ
             checks[key] = exists
             if not exists:
                 missing.append(relative_or_str(workspace_dir / filename, run_root))
+        for filename in REQUIRED_RECORD_FILES:
+            record_path = lane_dir / filename
+            workspace_path = workspace_dir / filename
+            checks[f"workspace_matches_record/{filename}"] = same_file_content(record_path, workspace_path)
 
     feedback_path = workspace_dir / "scorer-feedback.md" if require_workspace_copy else lane_dir / "scorer-feedback.md"
     conformance_path = workspace_dir / "v1-conformance.json" if require_workspace_copy else lane_dir / "v1-conformance.json"
@@ -117,7 +130,7 @@ def check_generation(run_root: Path, seed: int, lane: str, generation: int, requ
     diagnostic_visibility = False
     if conformance_path.exists():
         diagnostic_lines = scorer_diagnostic_lines(conformance_path)
-        diagnostic_visibility = all(line in feedback_text for line in diagnostic_lines[:20]) if diagnostic_lines else exact_section
+        diagnostic_visibility = all(line in feedback_text for line in diagnostic_lines) if diagnostic_lines else exact_section
 
     checks["feedback_has_exact_diagnostics_section"] = exact_section
     checks["feedback_contains_exact_diagnostics"] = diagnostic_visibility

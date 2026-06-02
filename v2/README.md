@@ -87,7 +87,7 @@ rerun. The protocol is:
 2. run neutral smokes/calibration;
 3. run paired Lane A / Lane B private pilots under equal model/runtime/budget
    conditions;
-4. run `python3 scripts/check_v2_feedback_parity.py <private-run-root>` after scoring each generation and before later generations can consume scorer feedback;
+4. run `python3 scripts/check_v2_feedback_parity.py <private-run-root> --generations <generation-number>` after scoring each generation and before later generations can consume scorer feedback;
 5. compare mechanical score, visual/artifact quality, trajectory quality, and
    evidence/recovery quality separately;
 6. write a conservative claim, including no-support or inconclusive outcomes.
