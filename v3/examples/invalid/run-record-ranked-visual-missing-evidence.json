@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "2000m.v3.run-record.v1",
+  "campaignId": "v3-foundation-fixture",
+  "scenarioId": "v3-foundation-scenario",
+  "taskSeed": 101,
+  "laneId": "A",
+  "entrant": {
+    "model": "fixture-model",
+    "runtime": "fixture-runtime",
+    "processType": "naked-model"
+  },
+  "artifact": {
+    "repoOrPath": "fixtures/produced-artifact",
+    "commitOrDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "manifestRef": "v3/examples/valid/manifest.full.json",
+    "changedFilesRef": "fixtures/changed-files.txt"
+  },
+  "protocolFreeze": {
+    "frozen": true,
+    "frozenCampaignRef": "v3/examples/valid/campaign.foundation.json",
+    "changedAfterLiveResults": false,
+    "scorerMutationObserved": false
+  },
+  "phases": [
+    {
+      "phaseId": "phase-1",
+      "kind": "initial-attempt",
+      "outputs": {
+        "buildCommand": "cargo build",
+        "scoreCommand": "cargo run -p m2000-v3-conformance -- fixtures/produced-artifact"
+      },
+      "feedbackDecisions": [
+        {
+          "feedbackId": "review-1",
+          "decision": "deferred",
+          "rationale": "Fixture has no live reviewer packet.",
+          "evidenceRef": "v3/WORKFLOW_RESILIENCE_PROTOCOL.md"
+        }
+      ],
+      "evidenceRefs": [
+        {
+          "label": "prompt",
+          "ref": "fixtures/prompt.md",
+          "kind": "prompt"
+        },
+        {
+          "label": "score",
+          "ref": "fixtures/mechanical-result.json",
+          "kind": "conformance-json"
+        }
+      ]
+    }
+  ],
+  "mechanical": {
+    "ranked": false,
+    "protocolVersion": "2000m.driver.v3",
+    "resultJsonRef": "fixtures/mechanical-result.json",
+    "passCount": 0,
+    "totalAcs": 24,
+    "failedAcs": [
+      "M01"
+    ]
+  },
+  "visual": {
+    "ranked": true,
+    "blockReason": "none",
+    "visualPackageRef": "",
+    "captureCommandResultRef": ""
+  },
+  "workflow": {
+    "contextWipeStatus": "not-reached",
+    "feedbackDecisionStatus": "not-reached",
+    "regressionStatus": "not-reached",
+    "handoffStatus": "not-reached"
+  },
+  "evidence": {
+    "publicSafe": true,
+    "privateRefsBlocked": false,
+    "requiredRefsMissing": [],
+    "claimBoundary": "calibration-only",
+    "refs": [
+      {
+        "label": "summary",
+        "ref": "fixtures/summary.md",
+        "kind": "summary"
+      }
+    ]
+  },
+  "finalRecommendation": {
+    "decision": "redesign",
+    "rationaleRefs": [
+      "v3/SPEC_GAPS_AND_DECISIONS.md"
+    ]
+  }
+}

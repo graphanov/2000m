@@ -47,6 +47,7 @@ INVALID_FIXTURES = {
     V3 / "examples" / "invalid" / "run-record-invalid-enum.json": "enum",
     V3 / "examples" / "invalid" / "result-mutated-frozen-protocol.json": "frozen protocol mutation",
     V3 / "examples" / "invalid" / "result-ranked-visual-missing-evidence.json": "ranked visual result",
+    V3 / "examples" / "invalid" / "run-record-ranked-visual-missing-evidence.json": "ranked run-record visual status",
 }
 
 PRIVATE_MARKERS = (
@@ -279,6 +280,12 @@ def validate_semantics(data: dict[str, Any], schema_version: str) -> None:
         require(freeze["changedAfterLiveResults"] is False, "frozen protocol mutation is calibration-only and invalid in foundation fixtures")
         require(freeze["scorerMutationObserved"] is False, "scorer mutation is invalid in foundation fixtures")
         require(data["entrant"]["processType"] in {"naked-model", "workflow-system", "scripted-agent", "human-operated", "other"}, "unsupported processType")
+        visual = data["visual"]
+        if visual["ranked"] is True or visual["blockReason"] == "none":
+            require(visual["ranked"] is True, "ranked run-record visual status must set visual.ranked=true when blockReason is none")
+            require(visual["blockReason"] == "none", "ranked run-record visual status must use blockReason none")
+            require(bool(visual["visualPackageRef"].strip()), "ranked run-record visual status requires non-empty visualPackageRef")
+            require(bool(visual.get("captureCommandResultRef", "").strip()), "ranked run-record visual status requires non-empty captureCommandResultRef")
     elif schema_version == "2000m.v3.result.v1":
         freeze = data["protocolFreeze"]
         require(freeze["changedAfterLiveResults"] is False, "frozen protocol mutation is calibration-only and invalid in foundation fixtures")
