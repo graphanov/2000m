@@ -149,6 +149,18 @@ def scan_text(path: Path, strings: Iterable[tuple[str, str]], *, strict_paths: b
     return failures
 
 
+def strip_allowed_marker_declarations(relative: Path, text: str) -> str:
+    """Avoid self-flagging validator marker declarations while scanning the rest."""
+    if relative.as_posix() != "scripts/validate_v3_schemas.py":
+        return text
+    return re.sub(
+        r"UNSUPPORTED_CLAIM_MARKERS\s*=\s*\(.*?\)\n",
+        "UNSUPPORTED_CLAIM_MARKERS = (...redacted marker declarations...)\n",
+        text,
+        flags=re.DOTALL,
+    )
+
+
 def scan_file(path: Path) -> list[str]:
     if path.suffix not in TEXT_EXTENSIONS:
         return []
@@ -156,13 +168,15 @@ def scan_file(path: Path) -> list[str]:
         text = path.read_text()
     except UnicodeDecodeError:
         return []
+    relative = path.relative_to(ROOT)
+    text = strip_allowed_marker_declarations(relative, text)
     if path.suffix == ".json":
         try:
             value = json.loads(text)
         except json.JSONDecodeError:
-            return scan_text(path.relative_to(ROOT), [("text", text)], strict_paths=True)
-        return scan_text(path.relative_to(ROOT), iter_json_strings(value), strict_paths=True)
-    return scan_text(path.relative_to(ROOT), [("text", text)], strict_paths=path.suffix in {".md", ".txt", ".html"})
+            return scan_text(relative, [("text", text)], strict_paths=True)
+        return scan_text(relative, iter_json_strings(value), strict_paths=True)
+    return scan_text(relative, [("text", text)], strict_paths=path.suffix in {".md", ".txt", ".html"})
 
 
 def main() -> int:

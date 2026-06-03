@@ -293,6 +293,16 @@ def validate_semantics(data: dict[str, Any], schema_version: str) -> None:
         require(freeze["calibrationOnlyIfChanged"] is True, "changed protocol must force calibration-only handling")
         require(data["claimBoundary"] != "public-benchmark-support", "foundation fixtures must not claim public benchmark support")
         require(data["evidence"]["claimBoundary"] == data["claimBoundary"], "evidence claimBoundary must match result claimBoundary")
+        mechanical = data["mechanical"]
+        acs = mechanical.get("acs")
+        if acs is not None:
+            for ac in acs:
+                require(bool(ac["detail"].strip()), f"mechanical.acs {ac['id']} detail must be non-empty")
+            failed_ids = [ac["id"] for ac in acs if ac["pass"] is False]
+            pass_count = sum(1 for ac in acs if ac["pass"] is True)
+            require(mechanical["failedAcs"] == failed_ids, "mechanical.failedAcs must match failed mechanical.acs item ids")
+            require(mechanical["totalAcs"] == len(acs), "mechanical.totalAcs must equal mechanical.acs length")
+            require(mechanical["passCount"] == pass_count, "mechanical.passCount must equal passing mechanical.acs item count")
         visual = data["visual"]
         if visual["ranked"] is True or visual["blockReason"] == "none":
             require(visual["ranked"] is True, "ranked visual result must set visual.ranked=true when blockReason is none")
