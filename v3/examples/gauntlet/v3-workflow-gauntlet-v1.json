@@ -1,0 +1,412 @@
+{
+  "bannedClaims": [
+    "makes the model smarter",
+    "scorecard paper trail proves value",
+    "public result before frozen live run",
+    "visual value without native capture",
+    "mechanical tie hides token waste"
+  ],
+  "claimBoundary": "predeclared-future-protocol",
+  "decisionRules": {
+    "evidenceVolumeScoreCredit": false,
+    "forbiddenLaneIds": [
+      "C"
+    ],
+    "maxGenerations": 3,
+    "minimalControlRequired": true,
+    "minTaskSeeds": 12,
+    "noSupportTriggers": [
+      "Final mechanical outcome ties while the structured candidate spends materially more tokens and does not win workflow or trajectory tracks.",
+      "Native visual capture is blocked and the report presents a visual product claim anyway.",
+      "The minimal checklist control ties the structured candidate on workflow, trajectory, token-cost, and evidence tracks.",
+      "Feedback parity, scorer diagnostic parity, or budget parity fails.",
+      "The protocol changes after live results are inspected."
+    ],
+    "stopOrRedesignRequiredWhen": [
+      "Two consecutive generations show no accepted metric improvement.",
+      "A stale or impossible AC is supported by scorer evidence.",
+      "A visual package remains invalid after one metadata repair and one native recapture attempt.",
+      "Token spend rises without a linked repair hypothesis or expected measurable gain."
+    ],
+    "supportCandidateRequires": [
+      "No material mechanical loss versus both controls.",
+      "Workflow track beats both controls on the predeclared aggregate.",
+      "Trajectory or token-cost track beats at least one control without worse final output.",
+      "Native capture is valid before any visual product claim is made.",
+      "Feedback parity, scorer diagnostic parity, budget parity, and public-safety checks pass.",
+      "The final report shows the minimal checklist comparison and all unavailable telemetry fields."
+    ],
+    "tokenMetricsSeparateFromMechanical": true,
+    "visualRankingRequiresNativeCaptureValid": true
+  },
+  "fairnessControls": {
+    "freezeBeforeLiveResults": true,
+    "noProtocolMutationAfterLiveResults": true,
+    "sameFeedbackPackets": true,
+    "sameModelRuntime": true,
+    "samePromptBudget": true,
+    "sameReviewerBudget": true,
+    "sameScorerDiagnostics": true,
+    "sameVisualSeeds": true
+  },
+  "gauntletId": "v3-workflow-gauntlet-v1",
+  "lanes": [
+    {
+      "allowedArtifacts": [
+        "public v3 spec",
+        "exact scorer diagnostics",
+        "same reviewer packet",
+        "native capture command",
+        "generic notes"
+      ],
+      "forbiddenAdvantages": [
+        "hidden lane-specific hints",
+        "post-hoc scorer edits",
+        "extra feedback not delivered to all lanes"
+      ],
+      "label": "unstructured baseline with full rubric",
+      "laneId": "U",
+      "processType": "naked-model",
+      "receivesHiddenInfo": false,
+      "receivesSameFeedback": true,
+      "receivesSameRubric": true,
+      "requiredEvidence": [
+        "run record",
+        "mechanical result",
+        "visual package or blocker",
+        "runtime token telemetry when available",
+        "feedback decision table",
+        "final handoff"
+      ],
+      "role": "unstructured-baseline"
+    },
+    {
+      "allowedArtifacts": [
+        "public v3 spec",
+        "exact scorer diagnostics",
+        "same reviewer packet",
+        "native capture command",
+        "short plain-text checklist"
+      ],
+      "forbiddenAdvantages": [
+        "hidden lane-specific hints",
+        "post-hoc scorer edits",
+        "tooling that records more than checklist state",
+        "extra feedback not delivered to all lanes"
+      ],
+      "label": "minimal checklist control with full rubric",
+      "laneId": "M",
+      "processType": "other",
+      "receivesHiddenInfo": false,
+      "receivesSameFeedback": true,
+      "receivesSameRubric": true,
+      "requiredEvidence": [
+        "run record",
+        "mechanical result",
+        "visual package or blocker",
+        "runtime token telemetry when available",
+        "checklist state",
+        "feedback decision table",
+        "final handoff"
+      ],
+      "role": "minimal-checklist-control"
+    },
+    {
+      "allowedArtifacts": [
+        "public v3 spec",
+        "exact scorer diagnostics",
+        "same reviewer packet",
+        "native capture command",
+        "pinned structured workflow selected before live run"
+      ],
+      "forbiddenAdvantages": [
+        "hidden lane-specific hints",
+        "post-hoc scorer edits",
+        "unfrozen workflow version",
+        "extra feedback not delivered to all lanes"
+      ],
+      "label": "structured workflow candidate with full rubric",
+      "laneId": "W",
+      "processType": "workflow-system",
+      "receivesHiddenInfo": false,
+      "receivesSameFeedback": true,
+      "receivesSameRubric": true,
+      "requiredEvidence": [
+        "run record",
+        "mechanical result",
+        "visual package or blocker",
+        "runtime token telemetry when available",
+        "repair hypothesis per generation",
+        "feedback decision table",
+        "final handoff"
+      ],
+      "role": "structured-workflow-candidate"
+    }
+  ],
+  "metrics": [
+    {
+      "direction": "gate",
+      "mechanicalScoreCoupling": "gate-only",
+      "metricId": "final-mechanical-correctness-gate",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Final ranked mechanical result must not lose material ACs versus both controls.",
+      "scoreUse": "gate-only",
+      "track": "mechanical",
+      "unavailablePolicy": "A missing scorer result blocks all support-candidate claims.",
+      "valueSource": "mechanical-scorer"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "mechanical-ac-improvement-trajectory",
+      "requiredForSupportCandidate": false,
+      "scoreBasis": "Accepted AC improvement by generation, excluding scorer or rubric mutation.",
+      "scoreUse": "track-score",
+      "track": "trajectory",
+      "unavailablePolicy": "Use diagnostic-only when starting score is already at the mechanical ceiling.",
+      "valueSource": "mechanical-scorer"
+    },
+    {
+      "direction": "gate",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "visual-native-capture-validity-gate",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Native capture package validates before any visual ranking or visual claim.",
+      "scoreUse": "gate-only",
+      "track": "visual",
+      "unavailablePolicy": "Visual track is rank-blocked when native capture is missing or invalid.",
+      "valueSource": "visual-package-validator"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "visual-product-quality",
+      "requiredForSupportCandidate": false,
+      "scoreBasis": "Blind visual/product rubric applied only after native capture validity passes.",
+      "scoreUse": "track-score",
+      "track": "visual",
+      "unavailablePolicy": "Unavailable when the native capture validity gate fails.",
+      "valueSource": "visual-package-validator"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "context-wipe-recovery",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Fresh worker can identify artifact, score, blockers, next command, and claim boundary from records only.",
+      "scoreUse": "track-score",
+      "track": "workflow",
+      "unavailablePolicy": "Missing handoff records score zero for the affected recovery phase.",
+      "valueSource": "run-record"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "reviewer-feedback-routing",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Valid feedback is accepted, stale or misleading feedback is rejected or deferred with evidence, and diagnostics are inspected when needed.",
+      "scoreUse": "track-score",
+      "track": "workflow",
+      "unavailablePolicy": "Missing feedback decisions score zero for this metric.",
+      "valueSource": "reviewer-decision-table"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "stale-or-impossible-ac-handling",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Entrant detects stale, impossible, or probe-only ACs and recommends inspect or redesign instead of false pass claims.",
+      "scoreUse": "track-score",
+      "track": "workflow",
+      "unavailablePolicy": "Missing classification scores zero for this metric.",
+      "valueSource": "run-record"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "handoff-resume-quality",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Independent resume attempt can continue from public-safe evidence without chat history.",
+      "scoreUse": "track-score",
+      "track": "workflow",
+      "unavailablePolicy": "Missing final handoff scores zero for this metric.",
+      "valueSource": "handoff-audit"
+    },
+    {
+      "direction": "lower-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "no-op-retry-count",
+      "requiredForSupportCandidate": false,
+      "scoreBasis": "Repeated generations with no accepted metric improvement are counted as waste.",
+      "scoreUse": "track-score",
+      "track": "trajectory",
+      "unavailablePolicy": "Unavailable if generation records are missing.",
+      "valueSource": "run-record"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "plateau-stop-redesign-quality",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Entrant recommends stop, inspect, or redesign when attempts plateau or evidence indicates impossible work.",
+      "scoreUse": "track-score",
+      "track": "workflow",
+      "unavailablePolicy": "Missing final recommendation scores zero for this metric.",
+      "valueSource": "run-record"
+    },
+    {
+      "direction": "lower-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "tokens-to-first-ranked-mechanical-ceiling",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Runtime tokens consumed before the first ranked mechanical ceiling, using only source-labeled telemetry.",
+      "scoreUse": "track-score",
+      "track": "token-cost",
+      "unavailablePolicy": "Unavailable when runtime logs do not expose reliable total tokens.",
+      "valueSource": "runtime-telemetry"
+    },
+    {
+      "direction": "lower-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "token-delta-versus-unstructured",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Token delta against the unstructured baseline for the same seed and generation boundary.",
+      "scoreUse": "track-score",
+      "track": "token-cost",
+      "unavailablePolicy": "Unavailable when either compared lane lacks reliable total token telemetry.",
+      "valueSource": "runtime-telemetry"
+    },
+    {
+      "direction": "lower-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "tokens-per-accepted-ac-improvement",
+      "requiredForSupportCandidate": false,
+      "scoreBasis": "Runtime tokens divided by accepted AC improvement when an improvement exists.",
+      "scoreUse": "diagnostic-only",
+      "track": "token-cost",
+      "unavailablePolicy": "Null when no accepted AC improvement exists; do not divide by zero or infer progress.",
+      "valueSource": "runtime-telemetry"
+    },
+    {
+      "direction": "higher-is-better",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "compact-evidence-quality",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Evidence is compact, public-safe, replayable, and decision-linked; byte count and file count give no credit.",
+      "scoreUse": "track-score",
+      "track": "evidence",
+      "unavailablePolicy": "Missing compact summary scores zero for this metric.",
+      "valueSource": "public-safety-scan"
+    },
+    {
+      "direction": "gate",
+      "mechanicalScoreCoupling": "none",
+      "metricId": "false-claim-prevention",
+      "requiredForSupportCandidate": true,
+      "scoreBasis": "Report states no support when support thresholds are not met and blocks claims for invalid tracks.",
+      "scoreUse": "gate-only",
+      "track": "evidence",
+      "unavailablePolicy": "Unsupported claims block public result use for the affected record.",
+      "valueSource": "public-safety-scan"
+    }
+  ],
+  "purpose": "Define a neutral future protocol that can distinguish workflow recoverability, trajectory control, and token efficiency from final mechanical ceiling ties.",
+  "reporting": {
+    "claimCeiling": "no-public-result-until-frozen-and-run",
+    "publicResultPrerequisites": [
+      "Gauntlet status is frozen before live results.",
+      "All lanes receive the same public rubric, feedback packets, scorer diagnostics, model/runtime, and prompt budgets.",
+      "Token telemetry is source-labeled and nullable for unavailable subfields.",
+      "Visual claims require valid native capture packages.",
+      "Final report shows the minimal checklist control comparison."
+    ],
+    "reportMustShow": [
+      "final-mechanical-outcome",
+      "visual-blocker-status",
+      "workflow-track-deltas",
+      "trajectory-efficiency",
+      "token-cost-deltas",
+      "feedback-parity",
+      "minimal-control-comparison",
+      "claim-boundary",
+      "unavailable-telemetry-fields"
+    ]
+  },
+  "scenarioFamilies": [
+    {
+      "failureSignal": "Fresh worker invents prior state, misses blockers, or repeats an already failed action.",
+      "familyId": "context-wipe-resume",
+      "publicHiddenSplit": "public-fixture-and-hidden-regression",
+      "requiredForFreeze": true,
+      "stressor": "context-wipe",
+      "successSignal": "Fresh worker resumes from compact records and names the next verified action without hidden chat."
+    },
+    {
+      "failureSignal": "Entrant blindly accepts stale or misleading feedback, or ignores valid diagnostics.",
+      "familyId": "reviewer-feedback-routing",
+      "publicHiddenSplit": "public-fixture-and-hidden-regression",
+      "requiredForFreeze": true,
+      "stressor": "reviewer-feedback-resilience",
+      "successSignal": "Entrant classifies valid, misleading, ambiguous, stale, and diagnostic feedback with evidence."
+    },
+    {
+      "failureSignal": "Targeted repair breaks a previously valid behavior.",
+      "familyId": "regression-trap-repair",
+      "publicHiddenSplit": "public-fixture-and-hidden-regression",
+      "requiredForFreeze": true,
+      "stressor": "regression-trap",
+      "successSignal": "Targeted repair improves the stated issue while preserving prior valid behavior."
+    },
+    {
+      "failureSignal": "Entrant keeps patching or claims success against an impossible or stale AC.",
+      "familyId": "stale-or-impossible-ac",
+      "publicHiddenSplit": "public-fixture-and-hidden-regression",
+      "requiredForFreeze": true,
+      "stressor": "stale-or-impossible-ac",
+      "successSignal": "Entrant identifies stale or impossible AC evidence and recommends inspect or redesign."
+    },
+    {
+      "failureSignal": "Higher token spend is hidden by a final mechanical tie.",
+      "familyId": "token-pressure",
+      "publicHiddenSplit": "public-only-calibration",
+      "requiredForFreeze": true,
+      "stressor": "token-pressure",
+      "successSignal": "Entrant links each retry to a repair hypothesis and reports source-labeled token cost."
+    },
+    {
+      "failureSignal": "Independent evaluator cannot recover the artifact, score, blockers, or next command.",
+      "familyId": "handoff-resume",
+      "publicHiddenSplit": "public-fixture-and-hidden-regression",
+      "requiredForFreeze": true,
+      "stressor": "handoff-resume",
+      "successSignal": "Independent evaluator can continue from the final handoff without chat history."
+    },
+    {
+      "failureSignal": "Visual rank or product claim is made from invalid metadata or missing capture.",
+      "familyId": "visual-native-capture-prerequisite",
+      "publicHiddenSplit": "public-only-calibration",
+      "requiredForFreeze": true,
+      "stressor": "visual-native-capture-prerequisite",
+      "successSignal": "Visual ranking remains blocked until native capture package validation passes."
+    },
+    {
+      "failureSignal": "Entrant continues no-op retries after repeated non-improvement.",
+      "familyId": "plateau-or-noop-retry",
+      "publicHiddenSplit": "public-fixture-and-hidden-regression",
+      "requiredForFreeze": true,
+      "stressor": "plateau-or-noop-retry",
+      "successSignal": "Entrant recommends stop, inspect, or redesign when progress plateaus."
+    }
+  ],
+  "schemaVersion": "2000m.v3.workflow-gauntlet.v1",
+  "status": "frozen-candidate",
+  "title": "v3 workflow gauntlet v1 frozen-candidate protocol",
+  "tracks": [
+    "mechanical",
+    "visual",
+    "workflow",
+    "trajectory",
+    "token-cost",
+    "evidence"
+  ]
+}

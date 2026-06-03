@@ -1,0 +1,457 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/graphanov/2000m/v3/workflow-gauntlet.schema.json",
+  "title": "2000m v3 workflow gauntlet protocol",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "gauntletId",
+    "title",
+    "status",
+    "claimBoundary",
+    "purpose",
+    "tracks",
+    "fairnessControls",
+    "lanes",
+    "scenarioFamilies",
+    "metrics",
+    "decisionRules",
+    "reporting",
+    "bannedClaims"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2000m.v3.workflow-gauntlet.v1"
+    },
+    "gauntletId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "frozen-candidate",
+        "frozen"
+      ]
+    },
+    "claimBoundary": {
+      "type": "string",
+      "enum": [
+        "predeclared-future-protocol",
+        "calibration-only"
+      ]
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "mechanical",
+          "visual",
+          "workflow",
+          "trajectory",
+          "token-cost",
+          "evidence"
+        ]
+      }
+    },
+    "fairnessControls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sameModelRuntime",
+        "samePromptBudget",
+        "sameFeedbackPackets",
+        "sameScorerDiagnostics",
+        "sameReviewerBudget",
+        "sameVisualSeeds",
+        "freezeBeforeLiveResults",
+        "noProtocolMutationAfterLiveResults"
+      ],
+      "properties": {
+        "sameModelRuntime": {
+          "type": "boolean"
+        },
+        "samePromptBudget": {
+          "type": "boolean"
+        },
+        "sameFeedbackPackets": {
+          "type": "boolean"
+        },
+        "sameScorerDiagnostics": {
+          "type": "boolean"
+        },
+        "sameReviewerBudget": {
+          "type": "boolean"
+        },
+        "sameVisualSeeds": {
+          "type": "boolean"
+        },
+        "freezeBeforeLiveResults": {
+          "type": "boolean"
+        },
+        "noProtocolMutationAfterLiveResults": {
+          "type": "boolean"
+        }
+      }
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "$ref": "#/$defs/lane"
+      }
+    },
+    "scenarioFamilies": {
+      "type": "array",
+      "minItems": 8,
+      "items": {
+        "$ref": "#/$defs/scenarioFamily"
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "$ref": "#/$defs/metric"
+      }
+    },
+    "decisionRules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minTaskSeeds",
+        "maxGenerations",
+        "minimalControlRequired",
+        "forbiddenLaneIds",
+        "visualRankingRequiresNativeCaptureValid",
+        "tokenMetricsSeparateFromMechanical",
+        "evidenceVolumeScoreCredit",
+        "supportCandidateRequires",
+        "noSupportTriggers",
+        "stopOrRedesignRequiredWhen"
+      ],
+      "properties": {
+        "minTaskSeeds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxGenerations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimalControlRequired": {
+          "type": "boolean"
+        },
+        "forbiddenLaneIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "visualRankingRequiresNativeCaptureValid": {
+          "type": "boolean"
+        },
+        "tokenMetricsSeparateFromMechanical": {
+          "type": "boolean"
+        },
+        "evidenceVolumeScoreCredit": {
+          "type": "boolean"
+        },
+        "supportCandidateRequires": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "noSupportTriggers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "stopOrRedesignRequiredWhen": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "reporting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claimCeiling",
+        "reportMustShow",
+        "publicResultPrerequisites"
+      ],
+      "properties": {
+        "claimCeiling": {
+          "type": "string",
+          "enum": [
+            "no-public-result-until-frozen-and-run",
+            "predeclared-support-candidate-only"
+          ]
+        },
+        "reportMustShow": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "final-mechanical-outcome",
+              "visual-blocker-status",
+              "workflow-track-deltas",
+              "trajectory-efficiency",
+              "token-cost-deltas",
+              "feedback-parity",
+              "minimal-control-comparison",
+              "claim-boundary",
+              "unavailable-telemetry-fields"
+            ]
+          }
+        },
+        "publicResultPrerequisites": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "bannedClaims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "$defs": {
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "laneId",
+        "role",
+        "label",
+        "processType",
+        "receivesSameRubric",
+        "receivesSameFeedback",
+        "receivesHiddenInfo",
+        "allowedArtifacts",
+        "requiredEvidence",
+        "forbiddenAdvantages"
+      ],
+      "properties": {
+        "laneId": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_-]{0,15}$"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "unstructured-baseline",
+            "minimal-checklist-control",
+            "structured-workflow-candidate"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "processType": {
+          "type": "string",
+          "enum": [
+            "naked-model",
+            "workflow-system",
+            "scripted-agent",
+            "human-operated",
+            "other"
+          ]
+        },
+        "receivesSameRubric": {
+          "type": "boolean"
+        },
+        "receivesSameFeedback": {
+          "type": "boolean"
+        },
+        "receivesHiddenInfo": {
+          "type": "boolean"
+        },
+        "allowedArtifacts": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requiredEvidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forbiddenAdvantages": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "scenarioFamily": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "familyId",
+        "stressor",
+        "publicHiddenSplit",
+        "requiredForFreeze",
+        "successSignal",
+        "failureSignal"
+      ],
+      "properties": {
+        "familyId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+        },
+        "stressor": {
+          "type": "string",
+          "enum": [
+            "context-wipe",
+            "reviewer-feedback-resilience",
+            "regression-trap",
+            "stale-or-impossible-ac",
+            "token-pressure",
+            "handoff-resume",
+            "visual-native-capture-prerequisite",
+            "plateau-or-noop-retry"
+          ]
+        },
+        "publicHiddenSplit": {
+          "type": "string",
+          "enum": [
+            "public-fixture-and-hidden-regression",
+            "public-only-calibration"
+          ]
+        },
+        "requiredForFreeze": {
+          "type": "boolean"
+        },
+        "successSignal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "failureSignal": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "metricId",
+        "track",
+        "direction",
+        "valueSource",
+        "scoreUse",
+        "mechanicalScoreCoupling",
+        "requiredForSupportCandidate",
+        "scoreBasis",
+        "unavailablePolicy"
+      ],
+      "properties": {
+        "metricId": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{2,100}$"
+        },
+        "track": {
+          "type": "string",
+          "enum": [
+            "mechanical",
+            "visual",
+            "workflow",
+            "trajectory",
+            "token-cost",
+            "evidence"
+          ]
+        },
+        "direction": {
+          "type": "string",
+          "enum": [
+            "higher-is-better",
+            "lower-is-better",
+            "gate"
+          ]
+        },
+        "valueSource": {
+          "type": "string",
+          "enum": [
+            "mechanical-scorer",
+            "visual-package-validator",
+            "run-record",
+            "runtime-telemetry",
+            "reviewer-decision-table",
+            "handoff-audit",
+            "public-safety-scan"
+          ]
+        },
+        "scoreUse": {
+          "type": "string",
+          "enum": [
+            "track-score",
+            "gate-only",
+            "diagnostic-only"
+          ]
+        },
+        "mechanicalScoreCoupling": {
+          "type": "string",
+          "enum": [
+            "none",
+            "gate-only"
+          ]
+        },
+        "requiredForSupportCandidate": {
+          "type": "boolean"
+        },
+        "scoreBasis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unavailablePolicy": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

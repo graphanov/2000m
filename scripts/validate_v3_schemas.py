@@ -24,6 +24,7 @@ SCHEMAS = {
     "2000m.v3.run-record.v1": V3 / "run-record.schema.json",
     "2000m.v3.result.v1": V3 / "result.schema.json",
     "2000m.v3.visual-package.v1": V3 / "visual-package.schema.json",
+    "2000m.v3.workflow-gauntlet.v1": V3 / "workflow-gauntlet.schema.json",
 }
 REQUIRED_SPEC_FILES = [
     V3 / "manifest.schema.json",
@@ -31,6 +32,7 @@ REQUIRED_SPEC_FILES = [
     V3 / "run-record.schema.json",
     V3 / "result.schema.json",
     V3 / "visual-package.schema.json",
+    V3 / "workflow-gauntlet.schema.json",
     V3 / "2000m.driver.v3.md",
     V3 / "MECHANICAL_AC_SPEC.md",
     V3 / "VISUAL_RUBRIC.md",
