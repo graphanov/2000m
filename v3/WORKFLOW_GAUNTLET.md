@@ -72,9 +72,9 @@ A structured workflow can earn a support-candidate result only if it:
 
 Anything less is no support or calibration-only, depending on the failure.
 
-## Fixture
+## Fixtures and smoke runner
 
-The public frozen-candidate fixture is:
+The public frozen-candidate protocol fixture is:
 
 ```text
 v3/examples/gauntlet/v3-workflow-gauntlet-v1.json
@@ -85,3 +85,22 @@ Validate it with:
 ```bash
 python3 scripts/validate_v3_workflow_gauntlet.py
 ```
+
+The public calibration-only smoke pack is:
+
+```text
+v3/examples/gauntlet/smoke/v3-workflow-gauntlet-smoke.fixture.json
+```
+
+Run it with:
+
+```bash
+python3 scripts/run_v3_workflow_gauntlet_smoke.py
+```
+
+The smoke pack is synthetic protocol calibration, not contender evidence. It
+loads generic v3 run-record/result fixtures for lanes `U`, `M`, and `W`, covers
+all required scenario families, and emits a deterministic no-support-style
+summary where final mechanical outcome ties, visual ranking is blocked by invalid
+native capture metadata, the structured candidate does not beat the minimal
+checklist control, and token cost remains a separate track.

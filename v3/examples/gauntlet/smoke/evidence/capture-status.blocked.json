@@ -1,0 +1,8 @@
+{
+  "claimBoundary": "calibration-only",
+  "nativeCaptureValid": false,
+  "note": "Synthetic smoke fixture; visual ranking remains blocked.",
+  "reason": "missing-capture-metadata",
+  "schemaVersion": "2000m.v3.gauntlet-capture-status.v1",
+  "status": "blocked"
+}
