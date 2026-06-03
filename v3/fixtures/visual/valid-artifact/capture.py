@@ -35,7 +35,12 @@ def main() -> int:
     screenshot = PNG_BYTES + f"\n# seed={args.seed} window={args.window}\n".encode()
     replay = GIF_BYTES + f"\n# seed={args.seed} window={args.window}\n".encode()
     state = {"seed": args.seed, "window": args.window, "fixture": "visual-capture", "tick": 120}
-    frame_checksum = sha256_bytes(screenshot + replay)
+    frame_checksum = sha256_json({
+        "state": state,
+        "fps": 30,
+        "frameCount": 120,
+        "events": ["spawn", "turn"],
+    })
     frames = {
         "schemaVersion": "2000m.capture.frames.v1",
         "seed": args.seed,

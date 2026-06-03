@@ -20,6 +20,7 @@ For every scored generation in every lane, record:
 - prompt ref;
 - final model response ref;
 - stdout/stderr refs;
+- runtime token telemetry when the runtime exposes reliable usage lines;
 - files changed or artifact refs;
 - build command and result;
 - test command and result;
@@ -108,7 +109,7 @@ Allowed wording:
 
 > Repeatable workflow-value support candidate under this v3 scenario.
 
-### Public benchmark support
+### Externally reviewed support
 
 Reserve for larger campaigns with multiple seeds, frozen scenarios, public-safe evidence, and independent review. Do not use for private pilots.
 
@@ -166,8 +167,25 @@ mechanical correctness
 product / visual artifact quality
 workflow resilience
 trajectory quality
+token / cost efficiency
 evidence / recovery / governance quality
 claim boundary
 ```
 
 Do not collapse these into a single feel-good narrative.
+
+When token/cost telemetry is present, the report should show:
+
+```text
+tokens per generation
+total tokens by seed/lane
+total tokens by lane
+tokens until first ranked mechanical ceiling
+tokens per passed-AC improvement where meaningful
+Lane B vs Lane A token delta
+unavailable token/cost subfields
+```
+
+If the runtime exposes only total tokens, record only total tokens. Do not infer
+input/output/cached/reasoning splits or dollar cost from logs that do not carry
+those fields.

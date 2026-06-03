@@ -26,7 +26,7 @@ Every ranked visual package must validate against `v3/visual-package.schema.json
 - per-window frame metadata;
 - rubric record;
 - artifact digest captured before rendering;
-- capture command and checksums for each window.
+- capture command, native frame checksum, screenshot byte checksum, and replay byte checksum for each window.
 
 ## Capture windows
 
@@ -62,6 +62,7 @@ The visual track is rank-blocked when:
 - capture command is missing or fails without valid rerun;
 - screenshot/replay/frame metadata refs are missing;
 - frame metadata omits seed, window, frame count, FPS, input ref, state checksum, or frame checksum;
+- screenshot or replay byte checksums are missing or do not match packaged media;
 - fixed seeds/windows changed after live result inspection;
 - blind label map was opened before rating;
 - package/public record contains private local refs;

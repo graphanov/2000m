@@ -144,6 +144,9 @@
     "evidence": {
       "$ref": "#/$defs/evidenceStatus"
     },
+    "runtimeTelemetry": {
+      "$ref": "#/$defs/runtimeTelemetry"
+    },
     "finalRecommendation": {
       "$ref": "#/$defs/finalRecommendation"
     }
@@ -535,6 +538,133 @@
                   "other"
                 ]
               }
+            }
+          }
+        }
+      }
+    },
+    "runtimeTelemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "tokens",
+        "cost"
+      ],
+      "properties": {
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "ref",
+            "parser"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "codex-stderr",
+                "adapter-receipt",
+                "manual-entry",
+                "unknown"
+              ]
+            },
+            "ref": {
+              "type": "string"
+            },
+            "parser": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "total",
+            "input",
+            "output",
+            "cachedInput",
+            "reasoning",
+            "unavailableFields"
+          ],
+          "properties": {
+            "total": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "input": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "output": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "cachedInput": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "reasoning": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "unavailableFields": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "total",
+                  "input",
+                  "output",
+                  "cachedInput",
+                  "reasoning"
+                ]
+              }
+            }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "estimatedUsd",
+            "currency",
+            "unavailableReason"
+          ],
+          "properties": {
+            "estimatedUsd": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "currency": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "unavailableReason": {
+              "type": "string"
             }
           }
         }

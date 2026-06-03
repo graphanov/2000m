@@ -27,10 +27,6 @@ def sha256_file(path: Path) -> str:
     return sha256_bytes(path.read_bytes())
 
 
-def sha256_pair(first: Path, second: Path) -> str:
-    return sha256_bytes(first.read_bytes() + second.read_bytes())
-
-
 def load_json(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text())
 
@@ -163,14 +159,16 @@ def main() -> int:
                 "seed": seed,
                 "captureCommand": "python3 capture.py --seed {seed} --window {window} --out {out}",
                 "screenshotRef": screenshot_ref,
+                "screenshotChecksum": sha256_file(out / screenshot_ref),
                 "replayRef": replay_ref,
+                "replayChecksum": sha256_file(out / replay_ref),
                 "frameMetadataRef": frame_ref,
                 "rubricMetadataRef": rubric_ref,
                 "fps": frames["fps"],
                 "frameCount": frames["frameCount"],
                 "inputSequenceRef": "visual-package/inputs/empty-inputs.json",
                 "stateChecksum": frames["stateChecksum"],
-                "frameChecksum": sha256_pair(out / screenshot_ref, out / replay_ref),
+                "frameChecksum": frames["frameChecksum"],
                 "warnings": []
             })
             labels[label] = {"seed": seed, "window": window, "sealedLaneKey": "artifact-01"}
