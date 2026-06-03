@@ -1,0 +1,194 @@
+{
+  "artifact": {
+    "changedFilesRef": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md",
+    "commitOrDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "manifestRef": "v3/fixtures/mechanical/valid-artifact/2000m.v3.json",
+    "repoOrPath": "v3/fixtures/mechanical/valid-artifact"
+  },
+  "campaignId": "v3-gauntlet-smoke",
+  "entrant": {
+    "model": "fixture-model",
+    "notes": "Synthetic minimal checklist control record; calibration only.",
+    "processType": "other",
+    "runtime": "fixture-runtime"
+  },
+  "evidence": {
+    "claimBoundary": "calibration-only",
+    "privateRefsBlocked": false,
+    "publicSafe": true,
+    "refs": [
+      {
+        "kind": "summary",
+        "label": "summary",
+        "ref": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+      },
+      {
+        "kind": "summary",
+        "label": "handoff",
+        "ref": "v3/examples/gauntlet/smoke/evidence/handoff.md"
+      }
+    ],
+    "requiredRefsMissing": [
+      "visualPackageRef",
+      "rubricRecordRef"
+    ]
+  },
+  "finalRecommendation": {
+    "decision": "stop",
+    "rationaleRefs": [
+      "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+    ]
+  },
+  "laneId": "M",
+  "mechanical": {
+    "failedAcs": [],
+    "passCount": 24,
+    "protocolVersion": "2000m.driver.v3",
+    "ranked": true,
+    "resultJsonRef": "v3/examples/gauntlet/smoke/evidence/mechanical-smoke-result.json",
+    "totalAcs": 24
+  },
+  "phases": [
+    {
+      "evidenceRefs": [
+        {
+          "kind": "scenario",
+          "label": "scenario pack",
+          "ref": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md"
+        },
+        {
+          "kind": "summary",
+          "label": "summary",
+          "ref": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+        }
+      ],
+      "kind": "initial-attempt",
+      "outputs": {
+        "expectedMetricGain": "accepted metric improvement or explicit stop/redesign recommendation",
+        "nextCommand": "python3 scripts/run_v3_workflow_gauntlet_smoke.py",
+        "repairHypothesis": "Repair the single failed mechanical diagnostic and rerun fixed scorer inputs.",
+        "status": "recorded"
+      },
+      "phaseId": "phase-1"
+    },
+    {
+      "evidenceRefs": [
+        {
+          "kind": "scenario",
+          "label": "scenario pack",
+          "ref": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md"
+        },
+        {
+          "kind": "summary",
+          "label": "summary",
+          "ref": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+        }
+      ],
+      "feedbackDecisions": [
+        {
+          "decision": "accepted",
+          "evidenceRef": "v3/examples/gauntlet/smoke/evidence/reviewer-packet.md",
+          "feedbackId": "fb-valid-mechanical",
+          "rationale": "Valid scorer diagnostic is applied without changing the frozen protocol."
+        },
+        {
+          "decision": "accepted",
+          "evidenceRef": "v3/examples/gauntlet/smoke/evidence/capture-status.blocked.json",
+          "feedbackId": "fb-valid-visual",
+          "rationale": "Invalid native capture metadata blocks only the visual track."
+        },
+        {
+          "decision": "rejected_with_reason",
+          "evidenceRef": "v3/SCORING_MODEL.md",
+          "feedbackId": "fb-misleading",
+          "rationale": "Misleading style feedback is not mechanical evidence."
+        },
+        {
+          "decision": "needs_scorer_inspection",
+          "evidenceRef": "v3/WORKFLOW_GAUNTLET.md",
+          "feedbackId": "fb-stale-impossible",
+          "rationale": "Stale or impossible AC evidence requires inspect or redesign, not blind patching."
+        },
+        {
+          "decision": "accepted",
+          "evidenceRef": "v3/examples/gauntlet/smoke/evidence/reviewer-packet.md",
+          "feedbackId": "fb-scorer-diagnostic",
+          "rationale": "Exact diagnostic parity is preserved across lanes."
+        }
+      ],
+      "kind": "reviewer-injection",
+      "outputs": {
+        "nextCommand": "python3 scripts/run_v3_workflow_gauntlet_smoke.py",
+        "status": "recorded"
+      },
+      "phaseId": "phase-2"
+    },
+    {
+      "evidenceRefs": [
+        {
+          "kind": "scenario",
+          "label": "scenario pack",
+          "ref": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md"
+        },
+        {
+          "kind": "summary",
+          "label": "summary",
+          "ref": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+        }
+      ],
+      "kind": "final-handoff",
+      "outputs": {
+        "nextCommand": "python3 scripts/run_v3_workflow_gauntlet_smoke.py",
+        "status": "recorded"
+      },
+      "phaseId": "phase-3"
+    }
+  ],
+  "protocolFreeze": {
+    "calibrationReason": "Synthetic gauntlet smoke fixture; not live evidence.",
+    "changedAfterLiveResults": false,
+    "frozen": true,
+    "frozenCampaignRef": "v3/examples/gauntlet/smoke/v3-workflow-gauntlet-smoke.fixture.json",
+    "scorerMutationObserved": false
+  },
+  "runtimeTelemetry": {
+    "cost": {
+      "currency": null,
+      "estimatedUsd": null,
+      "unavailableReason": "Synthetic smoke fixture has source-labeled total tokens only."
+    },
+    "source": {
+      "kind": "manual-entry",
+      "parser": "synthetic-gauntlet-smoke-v1",
+      "ref": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+    },
+    "tokens": {
+      "cachedInput": null,
+      "input": null,
+      "output": null,
+      "reasoning": null,
+      "total": 8500,
+      "unavailableFields": [
+        "input",
+        "output",
+        "cachedInput",
+        "reasoning"
+      ]
+    }
+  },
+  "scenarioId": "v3-workflow-gauntlet-smoke",
+  "schemaVersion": "2000m.v3.run-record.v1",
+  "taskSeed": 501,
+  "visual": {
+    "blockReason": "missing-capture-metadata",
+    "captureCommandResultRef": "v3/examples/gauntlet/smoke/evidence/capture-status.blocked.json",
+    "ranked": false,
+    "visualPackageRef": ""
+  },
+  "workflow": {
+    "contextWipeStatus": "passed",
+    "feedbackDecisionStatus": "passed",
+    "handoffStatus": "passed",
+    "regressionStatus": "passed"
+  }
+}

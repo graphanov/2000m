@@ -30,7 +30,7 @@ The benchmark remains independent and workflow-agnostic. It may test failure mod
 - [`VISUAL_RUBRIC.md`](VISUAL_RUBRIC.md) — draft native capture and blind-review rubric.
 - [`SCORING_MODEL.md`](SCORING_MODEL.md) — draft separated-track scoring and blocker model.
 - [`SANDBOX_AND_RESOURCE_POLICY.md`](SANDBOX_AND_RESOURCE_POLICY.md) — draft scorer sandbox/resource policy.
-- `*.schema.json` plus `examples/valid/`, `examples/invalid/`, `examples/workflow/`, and `examples/gauntlet/` — v3 schema foundation fixtures validated by `scripts/validate_v3_schemas.py`, `scripts/validate_v3_workflow_scenarios.py`, and `scripts/validate_v3_workflow_gauntlet.py`.
+- `*.schema.json` plus `examples/valid/`, `examples/invalid/`, `examples/workflow/`, and `examples/gauntlet/` — v3 schema foundation, workflow scenarios, and gauntlet calibration fixtures validated by `scripts/validate_v3_schemas.py`, `scripts/validate_v3_workflow_scenarios.py`, `scripts/validate_v3_workflow_gauntlet.py`, and `scripts/run_v3_workflow_gauntlet_smoke.py`.
 
 ## Claim boundary
 

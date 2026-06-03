@@ -1,0 +1,65 @@
+{
+  "campaignId": "v3-gauntlet-smoke",
+  "claimBoundary": "calibration-only",
+  "entrant": {
+    "model": "fixture-model",
+    "processType": "naked-model",
+    "runtime": "fixture-runtime"
+  },
+  "evidence": {
+    "claimBoundary": "calibration-only",
+    "compactSummaryRef": "v3/examples/gauntlet/smoke/evidence/summary.calibration.md",
+    "privateRefsBlocked": false,
+    "publicSafe": true,
+    "replayable": true,
+    "requiredRefsMissing": [
+      "visualPackageRef",
+      "rubricRecordRef"
+    ]
+  },
+  "laneId": "U",
+  "mechanical": {
+    "compositeScore": 100.0,
+    "determinism": {
+      "details": "synthetic deterministic smoke fixture",
+      "pass": true
+    },
+    "failedAcs": [],
+    "hiddenChallengeSummary": "public calibration-only fixture; no hidden challenge result",
+    "passCount": 24,
+    "protocolVersion": "2000m.driver.v3",
+    "ranked": true,
+    "regressionSummary": "synthetic regression status stable for smoke",
+    "resultJsonRef": "v3/examples/gauntlet/smoke/evidence/mechanical-smoke-result.json",
+    "totalAcs": 24
+  },
+  "protocolFreeze": {
+    "calibrationOnlyIfChanged": true,
+    "changedAfterLiveResults": false,
+    "scorerMutationObserved": false
+  },
+  "scenarioId": "v3-workflow-gauntlet-smoke",
+  "schemaVersion": "2000m.v3.result.v1",
+  "taskSeed": 501,
+  "visual": {
+    "blockReason": "missing-capture-metadata",
+    "captureDeterminism": "blocked",
+    "ranked": false,
+    "rubricRecordRef": "",
+    "visualPackageRef": ""
+  },
+  "warnings": [
+    "Synthetic calibration-only fixture; not a contender result."
+  ],
+  "workflow": {
+    "contextWipeRecoveryScore": 65,
+    "feedbackDecisionScore": 70,
+    "finalRecommendation": "stop",
+    "handoffScore": 70,
+    "impossibleRequirementHandlingScore": 65,
+    "rationaleRefs": [
+      "v3/examples/gauntlet/smoke/evidence/summary.calibration.md"
+    ],
+    "regressionProtectionScore": 65
+  }
+}

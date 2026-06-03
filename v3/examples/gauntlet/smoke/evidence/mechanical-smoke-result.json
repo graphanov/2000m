@@ -1,0 +1,6 @@
+{
+  "claimBoundary": "calibration-only",
+  "note": "Placeholder scorer ref for synthetic smoke records.",
+  "protocolVersion": "2000m.driver.v3",
+  "schemaVersion": "2000m.v3.gauntlet-mechanical-smoke-result.v1"
+}

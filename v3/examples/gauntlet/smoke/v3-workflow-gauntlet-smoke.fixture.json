@@ -1,0 +1,136 @@
+{
+  "claimBoundary": "calibration-only",
+  "declaredClaims": {
+    "contenderResultClaim": false,
+    "visualProductClaim": false,
+    "workflowValueClaim": false
+  },
+  "fixtureId": "v3-workflow-gauntlet-smoke-no-support",
+  "fixtureKind": "protocol-smoke",
+  "gauntletRef": "v3/examples/gauntlet/v3-workflow-gauntlet-v1.json",
+  "notes": "Synthetic calibration-only fixture records. Not a contender result and not live evidence.",
+  "records": [
+    {
+      "generation": 1,
+      "laneId": "U",
+      "resultRef": "v3/examples/gauntlet/smoke/results/u-g01.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/u-g01.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 2,
+      "laneId": "U",
+      "resultRef": "v3/examples/gauntlet/smoke/results/u-g02.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/u-g02.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 3,
+      "laneId": "U",
+      "resultRef": "v3/examples/gauntlet/smoke/results/u-g03.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/u-g03.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 1,
+      "laneId": "M",
+      "resultRef": "v3/examples/gauntlet/smoke/results/m-g01.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/m-g01.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 2,
+      "laneId": "M",
+      "resultRef": "v3/examples/gauntlet/smoke/results/m-g02.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/m-g02.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 3,
+      "laneId": "M",
+      "resultRef": "v3/examples/gauntlet/smoke/results/m-g03.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/m-g03.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 1,
+      "laneId": "W",
+      "resultRef": "v3/examples/gauntlet/smoke/results/w-g01.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/w-g01.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 2,
+      "laneId": "W",
+      "resultRef": "v3/examples/gauntlet/smoke/results/w-g02.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/w-g02.run-record.json",
+      "taskSeed": 501
+    },
+    {
+      "generation": 3,
+      "laneId": "W",
+      "resultRef": "v3/examples/gauntlet/smoke/results/w-g03.result.json",
+      "runRecordRef": "v3/examples/gauntlet/smoke/run-records/w-g03.run-record.json",
+      "taskSeed": 501
+    }
+  ],
+  "scenarioPack": [
+    {
+      "calibrationOnly": true,
+      "familyId": "context-wipe-resume",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "context-wipe"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "reviewer-feedback-routing",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "reviewer-feedback-resilience"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "regression-trap-repair",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "regression-trap"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "stale-or-impossible-ac",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "stale-or-impossible-ac"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "token-pressure",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "token-pressure"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "handoff-resume",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "handoff-resume"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "visual-native-capture-prerequisite",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "visual-native-capture-prerequisite"
+    },
+    {
+      "calibrationOnly": true,
+      "familyId": "plateau-or-noop-retry",
+      "fixtureRef": "v3/examples/gauntlet/smoke/evidence/scenario-pack.md",
+      "stressor": "plateau-or-noop-retry"
+    }
+  ],
+  "schemaVersion": "2000m.v3.workflow-gauntlet-smoke-fixture.v1",
+  "supportCandidateWouldNeed": [
+    "No material mechanical loss versus the unstructured and minimal checklist controls.",
+    "A workflow aggregate that beats both controls, including the minimal checklist control.",
+    "A trajectory or token-cost advantage without worse final output.",
+    "Valid native capture before any visual/product ranking.",
+    "Feedback parity, diagnostic parity, budget parity, and public-safety checks.",
+    "A final report that names unavailable telemetry fields and keeps token cost outside mechanical scoring."
+  ]
+}

@@ -153,7 +153,24 @@ Verification:
 
 ```bash
 python3 scripts/validate_v3_workflow_gauntlet.py
+python3 scripts/run_v3_workflow_gauntlet_smoke.py
 ```
+
+Executable smoke acceptance criteria:
+
+- Load the frozen gauntlet protocol and the calibration-only smoke fixture.
+- Require lanes `U`, `M`, and `W` and forbid Lane `C`.
+- Require all scenario families: context wipe, reviewer feedback resilience,
+  regression trap, stale/impossible AC, token pressure, handoff resume, visual
+  native-capture prerequisite, and plateau/no-op retry.
+- Validate referenced v3 run-record/result fixture records with existing schemas.
+- Report final mechanical outcome, visual blocker status, workflow deltas,
+  trajectory efficiency, token-cost deltas, feedback parity, minimal-control
+  comparison, claim boundary, and unavailable telemetry fields.
+- Keep token/cost telemetry separate from mechanical scoring and keep visual
+  ranking blocked unless native capture is valid.
+- Detect plateau/no-op retry and missing repair hypotheses in retry/continue
+  generations.
 
 ## Gate 6 — private pilot
 
