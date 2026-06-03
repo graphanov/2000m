@@ -130,6 +130,7 @@ Acceptance criteria:
 - Native visual packages are required for visual track ranking.
 - Missing visual packages block visual claims.
 - Decision thresholds are predeclared.
+- Runtime token telemetry is parsed from source-labeled logs or receipts and reported separately from mechanical scoring.
 
 ## Gate 6 — private pilot
 
@@ -145,6 +146,7 @@ context wipe: after first scored generation
 reviewer packet: one per pair, same phase
 visual windows: fixed before run
 claim ceiling: private directional signal only
+token telemetry: source-labeled total tokens when reliable; split/cost fields nullable unless supplied by the runtime
 ```
 
 ## Gate 7 — larger evidence campaign

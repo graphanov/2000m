@@ -91,10 +91,17 @@ Required `frames.json` fields:
   "inputSequenceRef": "inputs.json",
   "stateChecksum": "sha256:...",
   "frameChecksum": "sha256:...",
+  "screenshotChecksum": "sha256:...",
+  "replayChecksum": "sha256:...",
   "events": ["..."],
   "warnings": []
 }
 ```
+
+`frameChecksum` is the checksum declared by native frame metadata. It must not
+be repurposed as a package-level checksum over screenshot/GIF bytes. Visual
+packages record screenshot and replay byte checksums separately so the validator
+can verify both the native capture metadata and the packaged media artifacts.
 
 Capture commands must be allowed to fail honestly. If a capture fails, the result record must include the command, stdout/stderr refs, and failure reason.
 

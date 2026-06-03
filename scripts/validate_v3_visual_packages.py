@@ -41,13 +41,6 @@ def sha256_file(path: Path) -> str:
     return "sha256:" + h.hexdigest()
 
 
-def sha256_pair(first: Path, second: Path) -> str:
-    h = hashlib.sha256()
-    h.update(first.read_bytes())
-    h.update(second.read_bytes())
-    return "sha256:" + h.hexdigest()
-
-
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise SystemExit(message)
@@ -104,7 +97,11 @@ def validate_package(path: Path) -> None:
         require(frames.get("fps") == item["fps"], f"frames fps mismatch for {frames_path}")
         require(frames.get("stateChecksum") == item["stateChecksum"], f"stateChecksum mismatch for {frames_path}")
         require(frames.get("frameChecksum") == item["frameChecksum"], f"frameChecksum mismatch for {frames_path}")
-        require(sha256_pair(screenshot, replay) == item["frameChecksum"], f"frameChecksum does not match screenshot+replay bytes for {frames_path}")
+        require(sha256_file(screenshot) == item["screenshotChecksum"], f"screenshotChecksum does not match screenshot bytes for {frames_path}")
+        require(sha256_file(replay) == item["replayChecksum"], f"replayChecksum does not match replay bytes for {frames_path}")
+        rubric = load_json(rubric_path)
+        if "frameChecksum" in rubric:
+            require(rubric["frameChecksum"] == item["frameChecksum"], f"rubric frameChecksum mismatch for {rubric_path}")
         require(sha256_file(rubric_path).startswith("sha256:"), "rubric metadata checksum computation failed")
     print(f"OK: v3 visual package {path.relative_to(ROOT) if path.is_relative_to(ROOT) else path}")
 

@@ -86,6 +86,31 @@
       }
     ]
   },
+  "runtimeTelemetry": {
+    "source": {
+      "kind": "codex-stderr",
+      "ref": "fixtures/codex-stderr.log",
+      "parser": "codex-cli-tokens-used-line-v1"
+    },
+    "tokens": {
+      "total": 12345,
+      "input": null,
+      "output": null,
+      "cachedInput": null,
+      "reasoning": null,
+      "unavailableFields": [
+        "input",
+        "output",
+        "cachedInput",
+        "reasoning"
+      ]
+    },
+    "cost": {
+      "estimatedUsd": null,
+      "currency": null,
+      "unavailableReason": "Fixture has no versioned pricing table."
+    }
+  },
   "finalRecommendation": {
     "decision": "redesign",
     "rationaleRefs": [

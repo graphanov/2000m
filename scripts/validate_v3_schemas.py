@@ -286,6 +286,16 @@ def validate_semantics(data: dict[str, Any], schema_version: str) -> None:
             require(visual["blockReason"] == "none", "ranked run-record visual status must use blockReason none")
             require(bool(visual["visualPackageRef"].strip()), "ranked run-record visual status requires non-empty visualPackageRef")
             require(bool(visual.get("captureCommandResultRef", "").strip()), "ranked run-record visual status requires non-empty captureCommandResultRef")
+        telemetry = data.get("runtimeTelemetry")
+        if telemetry is not None:
+            tokens = telemetry["tokens"]
+            unavailable = set(tokens["unavailableFields"])
+            for key in ("total", "input", "output", "cachedInput", "reasoning"):
+                if tokens[key] is None:
+                    require(key in unavailable, f"runtimeTelemetry.tokens.{key} null must be listed in unavailableFields")
+            cost = telemetry["cost"]
+            if cost["estimatedUsd"] is None:
+                require(bool(cost["unavailableReason"].strip()), "runtimeTelemetry cost unavailableReason is required when estimatedUsd is null")
     elif schema_version == "2000m.v3.result.v1":
         freeze = data["protocolFreeze"]
         require(freeze["changedAfterLiveResults"] is False, "frozen protocol mutation is calibration-only and invalid in foundation fixtures")
@@ -314,7 +324,7 @@ def validate_semantics(data: dict[str, Any], schema_version: str) -> None:
         require(data["anonymized"] is True, "visual package must be anonymized before blind review")
         require(data["mappingSealedBeforeReview"] is True, "blind label map must be sealed before review")
         for window in data["windows"]:
-            for key in ("seed", "captureCommand", "screenshotRef", "replayRef", "frameMetadataRef", "rubricMetadataRef", "fps", "frameCount", "inputSequenceRef", "stateChecksum", "frameChecksum"):
+            for key in ("seed", "captureCommand", "screenshotRef", "screenshotChecksum", "replayRef", "replayChecksum", "frameMetadataRef", "rubricMetadataRef", "fps", "frameCount", "inputSequenceRef", "stateChecksum", "frameChecksum"):
                 require(key in window, f"visual package missing capture metadata {key}")
             require(is_plain_int(window["seed"]), "capture seed must be integer, not boolean")
     elif schema_version == "2000m.v3.manifest.v1":
