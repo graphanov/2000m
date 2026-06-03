@@ -299,6 +299,7 @@ struct MechanicalResult {
     #[serde(rename = "compositeScore")]
     composite_score: f64,
     determinism: DeterminismResult,
+    acs: Vec<AcVerdict>,
     #[serde(rename = "failedAcs")]
     failed_acs: Vec<String>,
     #[serde(rename = "hiddenChallengeSummary")]
@@ -672,6 +673,13 @@ fn score(harness: &Harness, json_out: Option<&Path>) -> V3Result {
         .collect();
     let pass_count = acs.iter().filter(|ac| ac.pass).count();
     let ranked = failed_acs.is_empty();
+    let determinism_pass = ac_pass(&acs, "M02") && ac_pass(&acs, "M04") && ac_pass(&acs, "M20");
+    let hidden_challenge_summary = hidden_summary(harness, &acs);
+    let regression_summary = if ac_pass(&acs, "M20") {
+        "fixed hidden checks reran stably".to_string()
+    } else {
+        "fixed hidden checks were not stable".to_string()
+    };
     let visual_blocked = harness.manifest.capture.is_none() || harness.manifest.playable.is_none();
     let visual_block_reason = if visual_blocked {
         "missing-native-capture-or-playable-surface"
@@ -704,17 +712,14 @@ fn score(harness: &Harness, json_out: Option<&Path>) -> V3Result {
             total_acs: TOTAL_ACS,
             composite_score: (pass_count as f64 / TOTAL_ACS as f64) * 100.0,
             determinism: DeterminismResult {
-                pass: ac_pass(&acs, "M02") && ac_pass(&acs, "M04") && ac_pass(&acs, "M20"),
+                pass: determinism_pass,
                 details: "init, step, replay, and hidden regression checks are fixture-stable"
                     .to_string(),
             },
+            acs,
             failed_acs,
-            hidden_challenge_summary: hidden_summary(harness, &acs),
-            regression_summary: if ac_pass(&acs, "M20") {
-                "fixed hidden checks reran stably".to_string()
-            } else {
-                "fixed hidden checks were not stable".to_string()
-            },
+            hidden_challenge_summary,
+            regression_summary,
             result_json_ref: result_ref,
         },
         visual: VisualResult {

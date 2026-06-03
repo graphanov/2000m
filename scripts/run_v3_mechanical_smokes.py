@@ -52,11 +52,20 @@ def main() -> int:
 
     valid = load(valid_result)
     invalid = load(invalid_result)
+    valid_acs = valid["mechanical"].get("acs")
+    invalid_acs = invalid["mechanical"].get("acs")
     assert valid["mechanical"]["ranked"] is True, valid["mechanical"]
     assert valid["mechanical"]["passCount"] == valid["mechanical"]["totalAcs"] == 24, valid["mechanical"]
+    assert isinstance(valid_acs, list) and len(valid_acs) == valid["mechanical"]["totalAcs"], valid["mechanical"]
+    assert all({"id", "name", "pass", "detail"}.issubset(ac) for ac in valid_acs), valid_acs
+    assert all(isinstance(ac["detail"], str) and ac["detail"].strip() for ac in valid_acs), valid_acs
     assert valid["visual"]["ranked"] is False, valid["visual"]
     assert invalid["mechanical"]["ranked"] is False, invalid["mechanical"]
     assert "M06" in invalid["mechanical"]["failedAcs"], invalid["mechanical"]
+    assert isinstance(invalid_acs, list) and len(invalid_acs) == invalid["mechanical"]["totalAcs"], invalid["mechanical"]
+    failed_invalid = {ac["id"]: ac for ac in invalid_acs if ac["pass"] is False}
+    assert set(invalid["mechanical"]["failedAcs"]) == set(failed_invalid), invalid["mechanical"]
+    assert "M06" in failed_invalid and failed_invalid["M06"]["detail"].strip(), invalid["mechanical"]
     assert invalid["mechanical"]["protocolVersion"] == "2000m.driver.v3"
     print(f"OK: v3 mechanical smokes wrote {valid_result.relative_to(ROOT)} and {invalid_result.relative_to(ROOT)}")
     return 0
