@@ -132,6 +132,29 @@ Acceptance criteria:
 - Decision thresholds are predeclared.
 - Runtime token telemetry is parsed from source-labeled logs or receipts and reported separately from mechanical scoring.
 
+## Gate 5.5 — workflow gauntlet discrimination protocol
+
+Before treating a workflow campaign as persuasive, freeze a neutral gauntlet
+that can distinguish final-output ties from recoverability, trajectory, token
+cost, and handoff behavior.
+
+Acceptance criteria:
+
+- Include unstructured baseline, minimal checklist control, and structured workflow candidate lane roles.
+- Forbid Lane ID `C`.
+- Keep same rubric, model/runtime, prompt budget, feedback packets, scorer diagnostics, reviewer budget, and visual seeds across lanes.
+- Cover context wipe, reviewer resilience, regression traps, stale/impossible ACs, token pressure, handoff resume, visual native-capture validity, and plateau/no-op retry detection.
+- Predeclare token-cost as a separate track, not a mechanical score component.
+- Require native capture validity before visual ranking.
+- Reject evidence volume as score credit.
+- Require stop/inspect/redesign recommendations when attempts plateau or stale/impossible AC evidence appears.
+
+Verification:
+
+```bash
+python3 scripts/validate_v3_workflow_gauntlet.py
+```
+
 ## Gate 6 — private pilot
 
 Run a small private A/B only after the protocol is frozen.

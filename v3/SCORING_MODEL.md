@@ -40,6 +40,11 @@ without coupling the benchmark to any workflow product:
 - hidden/regression traps: public-safe trap classes that are independent of
   Open Scaffold, lane names, directory shape, or command vocabulary.
 
+The workflow gauntlet fixture in `v3/examples/gauntlet/` is the first
+frozen-candidate discrimination protocol for this backlog. It requires a
+minimal checklist control lane so workflow claims are compared against both an
+unstructured baseline and a cheap process baseline.
+
 ## Draft track fields
 
 ### Mechanical

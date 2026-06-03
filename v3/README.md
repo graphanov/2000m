@@ -21,6 +21,7 @@ The benchmark remains independent and workflow-agnostic. It may test failure mod
 - [`DESIGN.md`](DESIGN.md) — v3 architecture and four-track scoring design.
 - [`MANIFEST_AND_CAPTURE.md`](MANIFEST_AND_CAPTURE.md) — proposed v3 manifest, driver, capture, replay, and playable surface contract.
 - [`WORKFLOW_RESILIENCE_PROTOCOL.md`](WORKFLOW_RESILIENCE_PROTOCOL.md) — context-wipe, reviewer packet, regression trap, impossible/stale requirement, scorer-feedback, and handoff protocol.
+- [`WORKFLOW_GAUNTLET.md`](WORKFLOW_GAUNTLET.md) — frozen-candidate discrimination protocol for workflow, trajectory, token-cost, visual-blocker, and handoff claims.
 - [`EVIDENCE_AND_CLAIMS.md`](EVIDENCE_AND_CLAIMS.md) — evidence/governance requirements, claim ladder, and anti-rigging guardrails.
 - [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md) — staged path from this design packet to v3 scorer/harness implementation.
 - [`SPEC_GAPS_AND_DECISIONS.md`](SPEC_GAPS_AND_DECISIONS.md) — OMX advisory review gaps to resolve before executable v3 scorer work.
@@ -29,7 +30,7 @@ The benchmark remains independent and workflow-agnostic. It may test failure mod
 - [`VISUAL_RUBRIC.md`](VISUAL_RUBRIC.md) — draft native capture and blind-review rubric.
 - [`SCORING_MODEL.md`](SCORING_MODEL.md) — draft separated-track scoring and blocker model.
 - [`SANDBOX_AND_RESOURCE_POLICY.md`](SANDBOX_AND_RESOURCE_POLICY.md) — draft scorer sandbox/resource policy.
-- `*.schema.json` plus `examples/valid/` and `examples/invalid/` — v3 schema foundation fixtures validated by `scripts/validate_v3_schemas.py`.
+- `*.schema.json` plus `examples/valid/`, `examples/invalid/`, `examples/workflow/`, and `examples/gauntlet/` — v3 schema foundation fixtures validated by `scripts/validate_v3_schemas.py`, `scripts/validate_v3_workflow_scenarios.py`, and `scripts/validate_v3_workflow_gauntlet.py`.
 
 ## Claim boundary
 
